@@ -1,0 +1,306 @@
+Marketplace Revenue System —
+Implementation Document (Supabase)
+This document defines the final revenue and billing logic for the free‑tour marketplace, incorporating
+updated credit rules, guide plans, booking deductions, and refund mechanics.
+Roles:
+• Tourist (Free) — books tours, pays nothing to the platform.
+• Guide (Platform Free) — limited capacity & inventory.
+• Guide (Pro) — pays platform fees via credits + can boost tours.
+Tips are always off‑platform.
+Chargebacks are not part of the system.
+
+1. Executive Summary
+The platform monetizes Pro Guides through a prepaid credit system.
+Key rules:
+• 1 Credit = €1
+• Platform fee = 2 credits per adult (10+ years old)
+• Children under 10 = no platform fee
+• Credits deducted at booking time
+• Credits refunded if booking cancels within allowed window
+
+2. Core Revenue Engine
+2.1 Lead‑Generation Marketplace Model
+Tourists book for free → Guides receive participants → Platform charges Pro Guides in credits.
+
+2.2 Platform Logic
+2.2.1 Guide Plan Entitlements
+Platform Free Guide
+• Max adults per tour: 7
+• Can create: 1 tour only
+
+1
+
+• Max slots: 2 per week
+• Lower ranking visibility
+• Cannot boost tours
+Pro Guide
+• Unlimited adults capacity
+• Unlimited tours
+• Unlimited slots
+• Higher ranking visibility
+• Access to paid features (boosts)
+
+2.2.2 End‑to‑End Money Flow
+Tourist books tour (free)
+↓
+Platform records booking
+↓
+If Guide = PRO:
+Credits deducted (2 per adult)
+↓
+Guide runs tour
+↓
+Tourist tips guide (off‑platform)
+Platform revenue comes from:
+• Credits purchased
+• Credits spent on boosts
+
+2.2.3 Booking → Revenue Event‑State Diagram
+Tour created
+│
+Tourist books
+│
+Adults counted (age ≥10)
+│
+Credits deducted immediately
+│
+Booking confirmed
+│
+Tour occurs
+Parallel path:
+
+2
+
+Guide activates boost
+│
+Credits deducted
+│
+Boost active for X days
+Revenue events occur when:
+• Booking happens
+• Boost is purchased
+
+3. Monetization Layers
+3.1 Platform Free
+Free guides can:
+• List 1 tour
+• Create 2 weekly slots
+• Accept max 7 adults per tour
+No credit deductions. No boosts. Lower ranking.
+
+4. Credit & Billing Infrastructure
+4.1 Prepaid Credit Wallet
+Credit Value
+• 1 Credit = €1
+
+Booking Deduction Logic
+Guide buys credits
+↓
+Booking happens
+↓
+Count adults (≥10 years old)
+↓
+2 credits deducted per adult
+↓
+Wallet balance updated
+
+3
+
+Children under 10:
+• 0 credits deducted
+
+Boost Deduction Logic
+Guide selects tour boost
+↓
+Select duration (X days)
+↓
+Credits deducted
+↓
+Boost active
+
+Auto Top‑Up & Alerts
+Credit balance monitoring:
+
+Balance hits 30 credits
+↓
+Email sent → “Top up your wallet”
+Balance hits 15 credits
+↓
+Automatic card charge
+↓
++50 credits added
+
+Cancellation Refund Logic
+Credits are refunded if a booking cancels within the allowed window.
+Rule:
+• If guest cancels ≥24h before tour → credits refunded
+• If after cutoff → no refund
+Refund flow:
+
+Booking cancelled
+↓
+Check cancellation window
+↓
+
+4
+
+If valid → credits refunded
+↓
+Wallet updated
+
+5. Implementation in Supabase
+5.1 Core Tables
+profiles
+• id
+• role (tourist|guide)
+• guide_plan (free|pro)
+
+tours
+• id
+• guide_id
+• capacity_limit
+
+tour_instances
+• id
+• tour_id
+• start_at
+
+bookings
+• id
+• tour_instance_id
+• adults_count
+• children_count
+• status
+
+credit_wallets
+• guide_id
+• balance
+
+credit_transactions
+• id
+• guide_id
+• type (purchase|spend|refund|auto_topup)
+• amount
+• booking_id (nullable)
+
+tour_boosts
+• id
+
+5
+
+• tour_id
+• credits_spent
+• starts_at
+• ends_at
+
+5.2 Deduction Function Logic
+deduct_credits_on_booking()
+Steps:
+1. Check guide plan = PRO
+2. Calculate adults × 2 credits
+3. Deduct from wallet
+4. Insert ledger entry
+
+5.3 Refund Function
+refund_credits_on_cancellation()
+Steps:
+1. Check cancellation ≥24h
+2. Retrieve adults count
+3. Refund same credits
+4. Insert refund ledger entry
+
+6. Unit Economics Example
+Credit pack: 100 credits = €100
+Booking with 4 adults:
+• Deduction = 8 credits
+• Revenue = €8
+
+7. Secondary Revenue Streams
+7.1 Visibility & Ranking Boosts (via Credits)
+Pro guides can boost tours.
+
+6
+
+Select boost
+↓
+Choose duration
+↓
+Spend X credits
+↓
+Ranking increases
+Example packages:
+• 50 credits → 2 days
+• 150 credits → 7 days
+• 300 credits → 14 days
+
+8. Cost vs Revenue Structure
+Costs:
+• Infra
+• Marketing
+• Support
+No tour operations costs.
+
+9. Marketplace Incentive Alignment
+Tourist → Free booking
+Guide → More adults → More tips
+Platform → More adult bookings → More credits spent
+
+10. Example Credit Deduction Scenario
+Guide has 5 bookings for Feb 20:
+Booking
+
+Adults
+
+Credits Deducted
+
+#1
+
+3
+
+6
+
+#2
+
+1
+
+2
+
+#3
+
+5
+
+10
+
+#4
+
+2
+
+4
+
+7
+
+Booking
+
+Adults
+
+Credits Deducted
+
+#5
+
+4
+
+8
+
+Total deducted = 30 credits
+
+Cancellation Case
+If Booking #3 cancels ≥24h before tour:
+
+Refund = 5 adults × 2 credits = 10 credits
+Wallet updated accordingly.
+
+End of Document
+
+8
+
+

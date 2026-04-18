@@ -1,0 +1,668 @@
+"use client"
+import { useState, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Save, CheckCircle2, AlertCircle, Loader2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useAuth } from "@/lib/supabase/auth-context"
+
+const languages = [
+  "English",
+  "Spanish",
+  "French",
+  "German",
+  "Italian",
+  "Portuguese",
+  "Dutch",
+  "Russian",
+  "Chinese",
+  "Japanese",
+  "Korean",
+  "Arabic",
+]
+
+const categories = [
+  "History & Culture",
+  "Art & Architecture",
+  "Food & Drink",
+  "Nature & Parks",
+  "Nightlife",
+  "Street Art",
+  "Photography",
+  "Hidden Gems",
+  "Religious Sites",
+]
+
+export default function EditTourPage() {
+  const router = useRouter()
+  const params = useParams()
+  const { user } = useAuth()
+  const tourId = params.id as string
+
+  const [currentStep, setCurrentStep] = useState(1)
+  const [images, setImages] = useState<string[]>([])
+  const [highlights, setHighlights] = useState<string[]>([])
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [tourData, setTourData] = useState<any>(null)
+  const [schedulesCount, setSchedulesCount] = useState(0)
+  const [formData, setFormData] = useState({
+    title: "",
+    city: "",
+    description: "",
+    duration: "",
+    maxGroupSize: "",
+    meetingPoint: "",
+    meetingPointDetails: "",
+    whatToExpect: "",
+    whatToBring: "",
+    accessibility_info: "",
+  })
+
+  useEffect(() => {
+    const fetchTour = async () => {
+      if (!user || !tourId) return
+
+      // Check for saved draft first
+      const draftKey = `tour:draft:edit:${tourId}`
+      const savedDraft = localStorage.getItem(draftKey)
+
+      if (savedDraft) {
+        try {
+          const draftState = JSON.parse(savedDraft)
+          setFormData(draftState.formData)
+          setImages(draftState.images)
+          setHighlights(draftState.highlights)
+          setSelectedLanguages(draftState.selectedLanguages)
+          setSelectedCategories(draftState.selectedCategories)
+          setIsLoading(false)
+          return
+        } catch {
+          console.log("[v0] Failed to load draft")
+        }
+      }
+
+      try {
+        const response = await fetch(`/api/tours/${tourId}`)
+        if (!response.ok) {
+          if (response.status === 404) throw new Error("Tour not found")
+          throw new Error("Failed to fetch tour")
+        }
+
+        const tour = await response.json()
+        setTourData(tour)
+
+        setFormData({
+          title: tour.title || "",
+          city: tour.city || "",
+          description: tour.description || "",
+          duration: tour.duration_minutes ? String(tour.duration_minutes / 60) : "1.5",
+          maxGroupSize: String(tour.max_capacity || 10),
+          meetingPoint: tour.meeting_point || "",
+          meetingPointDetails: tour.meeting_point_details || "",
+          whatToExpect: tour.what_to_expect || "",
+          whatToBring: tour.what_to_bring || "",
+          accessibility_info: tour.accessibility_info || "",
+        })
+        setImages(Array.isArray(tour.images) ? tour.images : [])
+        setHighlights(Array.isArray(tour.highlights) ? tour.highlights : [])
+        setSelectedLanguages(Array.isArray(tour.languages) ? tour.languages : ["English"])
+        setSelectedCategories(Array.isArray(tour.categories) ? tour.categories : [])
+
+        // Fetch schedules count
+        const schedulesRes = await fetch(`/api/schedules?tour_id=${tourId}`)
+        if (schedulesRes.ok) {
+          const schedules = await schedulesRes.json()
+          setSchedulesCount(Array.isArray(schedules) ? schedules.length : 0)
+        }
+      } catch (err) {
+        console.error("[v0] Error fetching tour:", err)
+        setError(err instanceof Error ? err.message : "Failed to load tour")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchTour()
+  }, [tourId, user])
+
+  // Save draft to localStorage
+  useEffect(() => {
+    if (tourId && !isLoading) {
+      const draftKey = `tour:draft:edit:${tourId}`
+      const draftState = { formData, images, highlights, selectedLanguages, selectedCategories }
+      localStorage.setItem(draftKey, JSON.stringify(draftState))
+    }
+  }, [tourId, formData, images, highlights, selectedLanguages, selectedCategories, isLoading])
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const addHighlight = () => {
+    setHighlights([...highlights, ""])
+  }
+
+  const removeHighlight = (index: number) => {
+    setHighlights(highlights.filter((_, i) => i !== index))
+  }
+
+  const updateHighlight = (index: number, value: string) => {
+    const updated = [...highlights]
+    updated[index] = value
+    setHighlights(updated)
+  }
+
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages((prev) => (prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]))
+  }
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]))
+  }
+
+  const submitTour = async (status: "draft" | "published") => {
+    try {
+      setError(null)
+      setSuccessMessage(null)
+      setIsSubmitting(true)
+
+      if (!formData.title || !formData.city || !formData.description) {
+        setError("Please fill in all required fields")
+        return
+      }
+
+      const safeHighlights = highlights.filter((h) => h.trim())
+      const safeDuration = formData.duration ? Number.parseInt(formData.duration) * 60 : 90 * 60
+      const safeMaxCapacity = formData.maxGroupSize ? Number.parseInt(formData.maxGroupSize) : 10
+      const safeLanguages = selectedLanguages.length > 0 ? selectedLanguages : ["English"]
+      const safeImages = Array.isArray(images) ? images : []
+
+      const response = await fetch(`/api/tours/${tourId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formData.title,
+          city: formData.city,
+          description: formData.description,
+          highlights: safeHighlights,
+          duration_minutes: safeDuration,
+          max_capacity: safeMaxCapacity,
+          languages: safeLanguages,
+          categories: selectedCategories,
+          meeting_point: formData.meetingPoint,
+          meeting_point_details: formData.meetingPointDetails,
+          images: safeImages,
+          status: status,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Failed to ${status === "published" ? "publish" : "save"} tour`)
+      }
+
+      const updatedTour = await response.json()
+      console.log("[v0] Tour updated successfully:", updatedTour.id, "Status:", status)
+
+      setSuccessMessage(
+        status === "published" ? "Tour published successfully! It's now visible to tourists." : "Tour saved as draft.",
+      )
+
+      // Clear draft
+      const draftKey = `tour:draft:edit:${tourId}`
+      localStorage.removeItem(draftKey)
+
+      // Redirect after success
+      setTimeout(() => {
+        router.push("/dashboard/tours")
+      }, 1500)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "An error occurred"
+      setError(errorMessage)
+      console.error("[v0] Error updating tour:", err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const steps = [
+    { number: 1, title: "Basic Info", description: "Tour details" },
+    { number: 2, title: "Description", description: "What to expect" },
+    { number: 3, title: "Photos", description: "Add images" },
+    { number: 4, title: "Meeting Point", description: "Location details" },
+    { number: 5, title: "Review", description: "Final check" },
+  ]
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8">
+          <p className="text-muted-foreground">Loading tour...</p>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error && isLoading === false && !successMessage) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="p-8 max-w-md">
+          <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+          <h2 className="text-lg font-semibold mb-2">Error Loading Tour</h2>
+          <p className="text-muted-foreground mb-4">{error}</p>
+          <Link href="/dashboard/tours">
+            <Button>Back to Tours</Button>
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="sticky top-0 z-50 bg-background border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link href="/dashboard/tours">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-xl font-bold">Edit Tour</h1>
+              <p className="text-sm text-muted-foreground">Update your tour details</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              className="gap-2 bg-transparent"
+              onClick={() => submitTour("draft")}
+              disabled={isSubmitting}
+            >
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <Save className="h-4 w-4" />
+              Save Draft
+            </Button>
+            <Button className="gap-2" onClick={() => submitTour("published")} disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              <CheckCircle2 className="h-4 w-4" />
+              Publish
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-3xl mx-auto py-8 px-4 sm:px-6">
+        {error && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {successMessage && (
+          <Alert className="mb-6 border-green-200 bg-green-50">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800">{successMessage}</AlertDescription>
+          </Alert>
+        )}
+
+        <div className="grid lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-1">
+            <Card className="sticky top-24">
+              <CardHeader>
+                <CardTitle className="text-lg">Progress</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {steps.map((step) => (
+                    <button
+                      key={step.number}
+                      onClick={() => setCurrentStep(step.number)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
+                        currentStep === step.number
+                          ? "bg-primary/10 border border-primary"
+                          : currentStep > step.number
+                            ? "bg-green-50 border border-green-200"
+                            : "hover:bg-muted"
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                          currentStep === step.number
+                            ? "bg-primary text-primary-foreground"
+                            : currentStep > step.number
+                              ? "bg-green-500 text-white"
+                              : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {currentStep > step.number ? <CheckCircle2 className="h-5 w-5" /> : step.number}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{step.title}</p>
+                        <p className="text-xs text-muted-foreground">{step.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {process.env.NODE_ENV === "development" && tourData && (
+              <Card className="mt-4 border-amber-200 bg-amber-50">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium text-amber-900">Debug Info</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-amber-700">Guide ID:</span>
+                    <span className="font-mono text-amber-900">{tourData.guide_id?.slice(0, 8)}...</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-amber-700">Status:</span>
+                    <span className="font-mono text-amber-900">{tourData.status}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-amber-700">Photos:</span>
+                    <span className="font-mono text-amber-900">{Array.isArray(tourData.photos) ? tourData.photos.length : 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-amber-700">Schedules:</span>
+                    <span className="font-mono text-amber-900">{schedulesCount}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          <div className="lg:col-span-3">
+            {currentStep === 1 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Basic Info</CardTitle>
+                  <CardDescription>Tour details</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Title</Label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => handleInputChange("title", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter tour title"
+                      />
+                    </div>
+                    <div>
+                      <Label>City</Label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter city"
+                      />
+                    </div>
+                    <div>
+                      <Label>Description</Label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => handleInputChange("description", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter tour description"
+                      />
+                    </div>
+                    <div>
+                      <Label>Duration (hours)</Label>
+                      <input
+                        type="number"
+                        value={formData.duration}
+                        onChange={(e) => handleInputChange("duration", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter duration in hours"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <Label>Max Group Size</Label>
+                      <input
+                        type="number"
+                        value={formData.maxGroupSize}
+                        onChange={(e) => handleInputChange("maxGroupSize", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter max group size"
+                        min="1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentStep(2)} className="flex-1">
+                      Next
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {currentStep === 2 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Description</CardTitle>
+                  <CardDescription>What to expect</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label>What to Expect</Label>
+                      <textarea
+                        value={formData.whatToExpect}
+                        onChange={(e) => handleInputChange("whatToExpect", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter what to expect"
+                      />
+                    </div>
+                    <div>
+                      <Label>What to Bring</Label>
+                      <textarea
+                        value={formData.whatToBring}
+                        onChange={(e) => handleInputChange("whatToBring", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter what to bring"
+                      />
+                    </div>
+                    <div>
+                      <Label>Accessibility</Label>
+                      <textarea
+                        value={formData.accessibility_info}
+                        onChange={(e) => handleInputChange("accessibility_info", e.target.value)}
+                        className="w-full px-3 py-2 border rounded-md"
+                        placeholder="Enter accessibility details"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button onClick={() => setCurrentStep(3)} className="flex-1">
+                      Next
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {currentStep === 3 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Photos</CardTitle>
+                  <CardDescription>Add images</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4">
+                    <Label>Upload Images</Label>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files
+                        if (files) {
+                          const fileUrls = Array.from(files).map((file) => URL.createObjectURL(file))
+                          setImages([...images, ...fileUrls])
+                        }
+                      }}
+                      className="w-full px-3 py-2 border rounded-md"
+                    />
+                    <div className="grid grid-cols-3 gap-4">
+                      {images.map((image, index) => (
+                        <img
+                          key={index}
+                          src={image || "/placeholder.svg"}
+                          alt={`Image ${index}`}
+                          className="w-full h-48 object-cover"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentStep(2)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button onClick={() => setCurrentStep(4)} className="flex-1">
+                      Next
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {currentStep === 4 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tour Schedules</CardTitle>
+                  <CardDescription>Add available dates and times for your tour</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-4 p-4 bg-muted rounded-lg">
+                    <Label>Add New Schedule</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="datetime-local"
+                        className="flex-1 px-3 py-2 border rounded-md"
+                        id="scheduleTime"
+                        placeholder="Start date and time"
+                      />
+                      <input
+                        type="number"
+                        className="w-24 px-3 py-2 border rounded-md"
+                        id="scheduleCapacity"
+                        placeholder="Capacity"
+                        min="1"
+                        max="100"
+                        defaultValue="10"
+                      />
+                      <Button
+                        onClick={async () => {
+                          const startTime = (document.getElementById("scheduleTime") as HTMLInputElement).value
+                          const capacity = (document.getElementById("scheduleCapacity") as HTMLInputElement).value
+
+                          if (!startTime || !capacity) {
+                            setError("Please fill in all schedule fields")
+                            return
+                          }
+
+                          try {
+                            const response = await fetch(`/api/tours/${tourId}/schedules`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                start_time: startTime,
+                                capacity: Number.parseInt(capacity),
+                              }),
+                            })
+
+                            if (!response.ok) throw new Error("Failed to create schedule")
+                            setSuccessMessage("Schedule added successfully!")
+                            ;(document.getElementById("scheduleTime") as HTMLInputElement).value = ""
+                            ;(document.getElementById("scheduleCapacity") as HTMLInputElement).value = "10"
+                          } catch (err) {
+                            setError(err instanceof Error ? err.message : "Failed to add schedule")
+                          }
+                        }}
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentStep(3)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button onClick={() => setCurrentStep(5)} className="flex-1">
+                      Next
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {currentStep === 5 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Review Your Tour</CardTitle>
+                  <CardDescription>Make sure everything looks good before publishing</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4 p-4 bg-muted rounded-lg">
+                    <div>
+                      <Label className="text-muted-foreground">Title</Label>
+                      <p className="font-semibold">{formData.title}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">City</Label>
+                      <p className="font-semibold">{formData.city}</p>
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">Duration</Label>
+                      <p className="font-semibold">{formData.duration} hours</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setCurrentStep(4)} className="flex-1">
+                      Back
+                    </Button>
+                    <Button
+                      onClick={() => submitTour("draft")}
+                      variant="outline"
+                      disabled={isSubmitting}
+                      className="flex-1"
+                    >
+                      {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Save Draft
+                    </Button>
+                    <Button onClick={() => submitTour("published")} disabled={isSubmitting} className="flex-1">
+                      {isSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                      Publish Tour
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

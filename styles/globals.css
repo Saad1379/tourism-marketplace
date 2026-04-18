@@ -1,0 +1,5 @@
+/*
+  Deprecated global stylesheet.
+  Source of truth is now app/globals.css.
+  This file is intentionally kept as a no-op to avoid accidental legacy imports.
+*/

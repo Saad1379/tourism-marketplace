@@ -1,0 +1,201 @@
+Balanced Ranking & Exposure Framework
+This document defines the ranking, exposure, and fairness system for the marketplace so the
+engineering team can implement it end‑to‑end.
+It ensures: - Pro monetization via credits & boosts - Fair exposure for Free guides - Cold‑start support
+for Newcomers - Marketplace trust and supply growth
+
+1. System Architecture Overview
+Ranking is not a single score. It is a 3‑layer system:
+1) Eligibility Layer → who can appear 2) Scoring Layer → rank_score calculation 3) Exposure Allocator
+→ quota + rotation fairness
+Pipeline:
+
+Request → Eligibility Filter → Score → Pool Split → Quota Mixer → Rotation →
+Results
+
+2. Eligibility Layer (Hard Rules)
+Only eligible tour instances enter ranking.
+
+2.1 Common rules
+Exclude tours if: - Slot is in the past - Slot is full - Tour unpublished/paused
+
+2.2 Platform Free constraints
+• Max tours: 1
+• Max slots: 2 / week
+• Max adults per slot: 7
+These limits are enforced at creation time and do not affect ranking math.
+
+2.3 Pro constraints
+• Unlimited tours
+• Unlimited slots
+• Unlimited adults
+
+1
+
+3. Scoring Layer (rank_score)
+Each tour_instance receives a rank score.
+
+3.1 Normalized signals (0..1)
+• relevance_norm → language, district, theme, time match
+• rating_norm → rating confidence (Bayesian)
+• reviews_norm → log(review_count)
+• reliability_norm → completion vs cancellations
+• freshness_norm → recency decay
+
+3.2 Base score
+base_score =
+0.45 * relevance_norm +
+0.30 * rating_norm +
+0.10 * reviews_norm +
+0.10 * reliability_norm +
+0.05 * freshness_norm
+
+4. Multipliers
+4.1 Availability multiplier
+availability_mult =
+IF is_full THEN 0.05
+ELSE IF available_spots <= 2 THEN 0.85
+ELSE 1.00
+
+4.2 Plan multiplier
+plan_mult =
+IF plan = 'pro' THEN 1.15
+ELSE 1.00
+
+2
+
+4.3 Boost multiplier (credits)
+boost_mult =
+1 + (boost_strength * boost_time_factor)
+boost_mult = MIN(boost_mult, 1.25)
+Where: - boost_strength depends on credits spent - boost_time_factor = remaining_time /
+total_time
+Boost guardrail: - Apply only if rating ≥ 4.2 OR newcomer verified
+
+4.4 Newcomer multiplier
+newcomer_mult =
+IF reviews_count < 10 THEN 1.25
+ELSE IF reviews_count < 25 THEN 1.15
+ELSE IF reviews_count < 50 THEN 1.05
+ELSE 1.00
+Newcomer definition: - reviews < 10 OR - account_age < 30 days
+
+4.5 Free protection multiplier
+free_protection_mult =
+IF plan = 'free' THEN 1.08
+ELSE 1.00
+
+5. Final Rank Formula
+rank_score =
+base_score
+* availability_mult
+* plan_mult
+* boost_mult
+* newcomer_mult
+* free_protection_mult
+Sort descending.
+
+3
+
+6. Exposure Allocator (Quota Mixer)
+Ranking alone is not enough. Exposure is allocated intentionally.
+
+6.1 Target exposure shares
+• Pro → 58%
+• Free → 27%
+• Newcomers → 15%
+
+6.2 Pool creation
+Split ranked tours into pools:
+
+pool_pro
+pool_free
+pool_newcomer
+Each pool sorted by rank_score.
+
+6.3 Page fill logic (example: 20 results)
+Pro → 12 slots
+Free → 5 slots
+Newcomer → 3 slots
+Fill sequentially from each pool.
+If a pool is empty → redistribute proportionally.
+
+7. Rotation Layer (Cold‑Start Protection)
+7.1 Impression guarantee
+Each newcomer tour receives minimum exposure:
+• X impressions / day OR
+• Y impressions / week
+If under quota → inject into positions 8–20.
+
+4
+
+7.2 Diversity rule
+Limit dominance:
+
+Max 2 results per guide per page
+
+8. Boost Behavior Under Capacity
+If a tour fills consistently (>90% slots filled):
+• Reduce boost effect
+• Prevent wasted credit spend
+
+9. Data & Backend Requirements
+9.1 Tables needed
+• tours
+• tour_instances
+• bookings
+• reviews
+• tour_boosts
+• credit_wallets
+• tour_impressions
+
+9.2 Computed fields
+• rank_score (SQL view or Edge Function)
+• boost_active
+• newcomer_flag
+• reliability_score
+
+10. Configurable Parameters
+Expose as environment/config values:
+
+plan_mult_pro = 1.15
+boost_mult_cap = 1.25
+newcomer_mult_max = 1.25
+free_protection_mult = 1.08
+
+5
+
+rotation_share = 0.30
+exposure_pro = 0.58
+exposure_free = 0.27
+exposure_new = 0.15
+
+11. End-to-End Flow Diagram
+User request
+↓
+Filter eligible slots
+↓
+Compute base_score
+↓
+Apply multipliers
+↓
+Split into pools
+↓
+Apply quota mixer
+↓
+Inject rotation
+↓
+Return ranked list
+
+12. Expected Marketplace Outcome
+Booking share distribution:
+• Pro → ~63%
+• Free → ~23%
+• Newcomers → ~14%
+Balanced monetization + supply growth.
+
+End of Document
+
+6
+
+

@@ -1,0 +1,79 @@
+# TipWalk
+
+> Connect travelers with passionate local guides. Book free walking tours in 350+ cities worldwide.
+
+TipWalk is a platform for discovering and booking free walking tours led by knowledgeable local guides. Tours have no upfront cost — travelers tip guides at the end based on their experience.
+
+## What Is TipWalk?
+
+TipWalk was founded in 2018 to make authentic travel accessible to everyone. We connect curious travelers with passionate local guides across 350+ cities, primarily in Europe. Our tip-based model keeps tours free to join while ensuring guides are rewarded for quality experiences.
+
+## For Travelers
+
+- Browse free walking tours by city, language, date, and duration
+- Book instantly — no upfront payment required
+- Cancel for free up to 24 hours before the tour
+- Tip your guide at the end based on your experience (typical: €10–20 per person)
+- Read verified reviews from other travelers before booking
+- Tours available in English, Spanish, French, German, Italian, Portuguese, and more
+
+## For Guides
+
+- Apply to become a guide by creating a profile and designing your first tour
+- Get approved and start accepting bookings from travelers worldwide
+- Earn tips directly from travelers
+- Set your own schedule and tour frequency
+- Use credits to access premium features that boost visibility:
+  - Featured Listings (appear at top of search results)
+  - Search Boost (higher ranking in city pages)
+  - Profile Highlight (eye-catching badge)
+  - Priority Placement (premium positioning)
+  - Advanced Analytics (detailed tour insights)
+
+## Platform Statistics
+
+- 50,000+ travelers served
+- 2,500+ local guides
+- 350+ cities covered
+- 48,567 verified reviews
+- 4.8 / 5 average rating
+- 98% of travelers would recommend TipWalk
+
+## Credits System
+
+Credits are the platform currency used by guides to unlock premium features. Key facts:
+- Purchased in packages (various tiers available)
+- Credits never expire
+- No refunds on purchased credits
+- Used only by guides — travelers book for free
+
+## Key Pages
+
+- `/` — Home: search tours, featured cities, top-rated tours
+- `/tours` — Browse and filter all available tours
+- `/tours/[id]` — Individual tour detail, schedule, and booking
+- `/how-it-works` — Step-by-step guide for travelers and guides
+- `/become-guide` — Apply to become a local guide
+- `/reviews` — Authentic traveler reviews and ratings
+- `/about` — Our story, mission, values, and team
+- `/faq` — Frequently asked questions for travelers and guides
+- `/contact` — Reach our support team
+- `/privacy` — Privacy policy (GDPR, CCPA, CNIL compliant)
+- `/terms` — Terms of service (governed by French law)
+- `/login` — Sign in (not indexed)
+- `/register` — Create an account (not indexed)
+
+## Company
+
+- Founded: 2018
+- Headquarters: Barcelona, Spain
+- Additional offices: Berlin, Germany; New York, USA
+- Governing law: France
+- Contact: support@tipwalk.com
+
+## Technical Notes
+
+- Built with Next.js (App Router), React, TypeScript, Supabase, and Stripe
+- Authentication via Supabase Auth (email/password, Google, GitHub OAuth)
+- Payments processed via Stripe (credit packages for guides)
+- Tour tips paid directly by travelers to guides in cash or via digital payment
