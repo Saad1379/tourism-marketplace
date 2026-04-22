@@ -1,13 +1,16 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Inter, Playfair_Display } from "next/font/google"
+import { Poppins } from "next/font/google"
 import "./globals.css"
 import { ClientLayout } from "./client-layout"
 import { BRAND_NAME, BRAND_SITE_URL, toCanonicalUrl, withBrandSuffix } from "@/lib/seo/brand"
 import { CONSENT_DENIED_REGIONS } from "@/lib/analytics/consent-regions"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
-const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-poppins",
+})
 const SITE_URL = BRAND_SITE_URL
 const GOOGLE_SITE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION?.trim()
 const META_PIXEL_ID = "1573217977123283"
@@ -230,9 +233,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${inter.className} ${playfair.className} font-sans antialiased`}
-      >
+      <body className={`${poppins.variable} font-sans antialiased`}>
         {IS_PRODUCTION ? (
           <noscript>
             <img

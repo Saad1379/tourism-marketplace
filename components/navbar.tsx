@@ -168,13 +168,15 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
           <>
             <button
               type="button"
+              role="presentation"
               aria-label="Close menu overlay"
-              className="fixed inset-x-0 top-16 bottom-0 z-[69] bg-black/40 backdrop-blur-[1px] lg:hidden"
+              className="fixed inset-x-0 top-16 bottom-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
               onClick={() => setMobileMenuOpen(false)}
             />
             <div
+              id="mobile-menu"
               className={cn(
-                "fixed inset-x-0 top-16 z-[70] border-t lg:hidden",
+                "fixed inset-x-0 top-16 z-50 border-t md:hidden",
                 isLanding
                   ? "landing-template border-[color:var(--landing-border)] bg-[color:var(--landing-surface)]"
                   : "border-border bg-background",
@@ -189,21 +191,21 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                   <>
                     <Link
                       href="/tours"
-                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted"
+                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Find Tours
                     </Link>
                     <Link
                       href="/how-it-works"
-                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted"
+                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       How It Works
                     </Link>
                     <Link
                       href="/blog"
-                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted"
+                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       Blog
@@ -401,8 +403,8 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
           />
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className={cn("hidden items-center gap-1 lg:flex", isLanding && "lg:absolute lg:left-1/2 lg:-translate-x-1/2 lg:gap-0.5")}>
+        {/* Desktop Navigation - with overflow handling */}
+        <div className="hidden overflow-x-auto overflow-y-hidden lg:flex lg:items-center lg:gap-x-1 lg:whitespace-nowrap">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className={cn("gap-1", desktopNavButtonClass)}>
@@ -596,16 +598,18 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
           )}
         </div>
 
-        {/* Mobile controls */}
+        {/* Mobile/Tablet controls */}
         <div className="inline-flex items-center gap-1 lg:hidden">
           <ThemeToggle />
           <button
             className={cn(
-              "inline-flex items-center justify-center rounded-md p-2 text-foreground/80",
+              "relative inline-flex items-center justify-center rounded-md p-2 text-foreground/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
               isLanding && "text-[color:var(--landing-muted)] hover:bg-[color:var(--landing-accent-soft)]",
             )}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>

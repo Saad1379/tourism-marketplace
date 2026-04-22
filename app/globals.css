@@ -5,14 +5,14 @@
 
 /**
  * TIPWALK DESIGN SYSTEM
- * 
+ *
  * Visual Foundation:
- * - Color Palette: Coral/Salmon primary (#F05A5A) + Teal secondary (#2CABB3) + Neutrals
- * - Typography: Inter (sans), Playfair Display (serif), JetBrains Mono (mono)
+ * - Color Palette: Orange primary (#e58d4d) + Navy secondary (#0b3884) + Neutrals
+ * - Typography: Poppins (all weights)
  * - Spacing Scale: 4px base unit (4, 8, 12, 16, 24, 32, 40, 48, 56, 64)
  * - Border Radius: 8px base (8, 6, 10, 12, 16)
  * - Breakpoints: sm: 640px, md: 768px, lg: 1024px, xl: 1280px
- * 
+ *
  * Component Sizing:
  * - Buttons: h-9 (36px) for default, h-10 (40px) for primary actions
  * - Cards: p-4 (16px) for padding
@@ -20,7 +20,7 @@
  * - Touch targets: min-h-10 (40px) for mobile accessibility
  */
 
-/* GuruWalk-Style Color Scheme - Coral/Orange + Teal Accents */
+/* Orange primary (#e58d4d) + Navy secondary (#0b3884) */
 :root {
   --background: oklch(0.994 0.004 40);
   --foreground: oklch(0.24 0.02 252);
@@ -28,24 +28,24 @@
   --card-foreground: oklch(0.24 0.02 252);
   --popover: oklch(0.999 0.003 40);
   --popover-foreground: oklch(0.24 0.02 252);
-  /* Coral primary tuned for stronger contrast on light surfaces */
-  --primary: oklch(0.56 0.17 31);
+  /* Orange primary #e58d4d */
+  --primary: oklch(0.70 0.14 51);
   --primary-foreground: oklch(0.99 0.004 40);
-  /* Teal secondary across both themes */
-  --secondary: oklch(0.63 0.11 197);
+  /* Navy secondary #0b3884 */
+  --secondary: oklch(0.28 0.15 265);
   --secondary-foreground: oklch(0.99 0.004 40);
   --muted: oklch(0.972 0.005 252);
   --muted-foreground: oklch(0.47 0.02 252);
-  --accent: oklch(0.94 0.03 31);
-  --accent-foreground: oklch(0.39 0.06 24);
+  --accent: oklch(0.94 0.03 51);
+  --accent-foreground: oklch(0.39 0.06 51);
   --destructive: oklch(0.58 0.21 28);
   --destructive-foreground: oklch(0.99 0.004 40);
   --border: oklch(0.915 0.006 252);
   --input: oklch(0.915 0.006 252);
-  --ring: oklch(0.56 0.17 31);
+  --ring: oklch(0.70 0.14 51);
   /* Charts */
-  --chart-1: oklch(0.56 0.17 31);
-  --chart-2: oklch(0.63 0.11 197);
+  --chart-1: oklch(0.70 0.14 51);
+  --chart-2: oklch(0.28 0.15 265);
   --chart-3: oklch(0.72 0.13 87);
   --chart-4: oklch(0.57 0.11 281);
   --chart-5: oklch(0.62 0.14 147);
@@ -53,13 +53,13 @@
   /* Sidebar */
   --sidebar: oklch(0.25 0.02 252);
   --sidebar-foreground: oklch(0.96 0.006 252);
-  --sidebar-primary: oklch(0.56 0.17 31);
+  --sidebar-primary: oklch(0.70 0.14 51);
   --sidebar-primary-foreground: oklch(0.99 0.004 40);
   --sidebar-accent: oklch(0.32 0.02 252);
   --sidebar-accent-foreground: oklch(0.96 0.006 252);
   --sidebar-border: oklch(0.36 0.02 252);
-  --sidebar-ring: oklch(0.56 0.17 31);
-  
+  --sidebar-ring: oklch(0.70 0.14 51);
+
   /* Spacing Scale (4px base unit) */
   --spacing-xs: 0.25rem;  /* 4px */
   --spacing-sm: 0.5rem;   /* 8px */
@@ -69,14 +69,14 @@
   --spacing-2xl: 2.5rem;  /* 40px */
   --spacing-3xl: 3rem;    /* 48px */
   --spacing-4xl: 3.5rem;  /* 56px */
-  
+
   /* Component Sizing Tokens */
   --button-height-sm: 2rem;      /* 32px */
   --button-height-md: 2.25rem;   /* 36px (default) */
   --button-height-lg: 2.5rem;    /* 40px */
   --input-height: 2.25rem;       /* 36px */
   --touch-target-min: 2.5rem;    /* 40px (mobile) */
-  
+
   /* Typography Scale */
   --text-xs: 0.75rem;      /* 12px */
   --text-sm: 0.875rem;     /* 14px */
@@ -86,13 +86,13 @@
   --text-2xl: 1.5rem;      /* 24px */
   --text-3xl: 1.875rem;    /* 30px */
   --text-4xl: 2.25rem;     /* 36px */
-  
+
   /* Shadow System */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 20px 25px rgba(245, 90, 90, 0.15);
+  --shadow-hover: 0 20px 25px rgba(229, 141, 77, 0.15);
 }
 
 .dark {
@@ -102,37 +102,39 @@
   --card-foreground: oklch(0.96 0.007 252);
   --popover: oklch(0.27 0.015 252);
   --popover-foreground: oklch(0.96 0.007 252);
-  --primary: oklch(0.72 0.17 31);
+  /* Lighter orange for dark mode */
+  --primary: oklch(0.76 0.14 51);
   --primary-foreground: oklch(0.24 0.015 252);
-  --secondary: oklch(0.67 0.1 197);
+  /* Light blue for dark mode (navy is unreadable on dark bg) */
+  --secondary: oklch(0.74 0.09 260);
   --secondary-foreground: oklch(0.24 0.015 252);
   --muted: oklch(0.33 0.012 252);
   --muted-foreground: oklch(0.81 0.011 252);
-  --accent: oklch(0.42 0.025 31);
+  --accent: oklch(0.42 0.025 51);
   --accent-foreground: oklch(0.96 0.007 252);
   --destructive: oklch(0.64 0.2 28);
   --destructive-foreground: oklch(0.24 0.015 252);
   --border: oklch(0.4 0.012 252);
   --input: oklch(0.4 0.012 252);
-  --ring: oklch(0.72 0.17 31);
-  --chart-1: oklch(0.72 0.17 31);
-  --chart-2: oklch(0.67 0.1 197);
+  --ring: oklch(0.76 0.14 51);
+  --chart-1: oklch(0.76 0.14 51);
+  --chart-2: oklch(0.74 0.09 260);
   --chart-3: oklch(0.75 0.11 87);
   --chart-4: oklch(0.64 0.08 281);
   --chart-5: oklch(0.67 0.11 147);
   --sidebar: oklch(0.29 0.013 252);
   --sidebar-foreground: oklch(0.96 0.007 252);
-  --sidebar-primary: oklch(0.72 0.17 31);
+  --sidebar-primary: oklch(0.76 0.14 51);
   --sidebar-primary-foreground: oklch(0.24 0.015 252);
   --sidebar-accent: oklch(0.37 0.013 252);
-  --sidebar-accent-foreground: oklch(0.96 0.007 252);
+  --sidebar-accent-foreground: oklch(0.96 0.006 252);
   --sidebar-border: oklch(0.47 0.013 252);
-  --sidebar-ring: oklch(0.72 0.17 31);
+  --sidebar-ring: oklch(0.76 0.14 51);
 }
 
 @theme inline {
-  --font-sans: "Inter", "Inter Fallback", system-ui, sans-serif;
-  --font-serif: "Playfair Display", "Playfair Display Fallback", Georgia, serif;
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-serif: "Poppins", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -179,7 +181,7 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Typography Scale */
   h1, .h1 {
     @apply text-4xl font-bold tracking-tight;
@@ -199,7 +201,7 @@
   h6, .h6 {
     @apply text-base font-semibold;
   }
-  
+
   /* Standardized Focus States for Accessibility */
   button:focus-visible,
   a:focus-visible,
@@ -216,45 +218,45 @@
   .card-padding {
     @apply p-4;
   }
-  
+
   .card-padding-lg {
     @apply p-6;
   }
-  
+
   /* Flex Center (common layout pattern) */
   .flex-center {
     @apply flex items-center justify-center;
   }
-  
+
   /* Flex Between (common layout pattern) */
   .flex-between {
     @apply flex items-center justify-between;
   }
-  
+
   /* Text Truncate with Ellipsis */
   .truncate-line-2 {
     @apply line-clamp-2;
   }
-  
+
   .truncate-line-3 {
     @apply line-clamp-3;
   }
-  
+
   /* Smooth Transitions */
   .transition-smooth {
     @apply transition-all duration-300 ease-in-out;
   }
-  
+
   /* Touch Target (Mobile Minimum 44px) */
   .touch-target {
     @apply min-h-10 min-w-10;
   }
-  
+
   /* Responsive Text Size */
   .text-responsive {
     @apply text-sm md:text-base;
   }
-  
+
   .text-responsive-lg {
     @apply text-base md:text-lg;
   }
@@ -306,17 +308,21 @@
 /* ─── Landing Template Scope ───────────────────────────────────── */
 :root {
   --landing-bg: #ffffff;
-  --landing-bg-soft: #ffffff;
+  --landing-bg-soft: #f9fafb;
   --landing-surface: #ffffff;
-  --landing-surface-2: #fcfcfd;
-  --landing-ink: #111827;
-  --landing-muted: #4b5563;
-  --landing-muted-2: #6b7280;
-  --landing-border: #e5e7eb;
-  --landing-border-2: #d1d5db;
-  --landing-accent: #df5a38;
-  --landing-accent-strong: #c94b2c;
-  --landing-accent-soft: rgba(223, 90, 56, 0.06);
+  --landing-surface-2: #f8f9fa;
+  --landing-ink: #0f172a;
+  --landing-muted: #475569;
+  --landing-muted-2: #64748b;
+  --landing-border: #e2e8f0;
+  --landing-border-2: #cbd5e1;
+  /* Primary orange */
+  --landing-accent: #e58d4d;
+  --landing-accent-strong: #cf7334;
+  --landing-accent-soft: rgba(229, 141, 77, 0.08);
+  /* Navy secondary — used as bg in CTA sections */
+  --landing-navy: #0b3884;
+  --landing-navy-soft: rgba(11, 56, 132, 0.07);
   --landing-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
   --landing-shadow-md: 0 10px 24px rgba(15, 23, 42, 0.1);
   --landing-shadow-lg: 0 20px 42px rgba(15, 23, 42, 0.14);
@@ -326,14 +332,14 @@
   --landing-footer-ink: #f4f7fb;
   --landing-footer-muted: #bec7d4;
   --landing-footer-head: #f9fbff;
-  --assistant-grad-start: #fff4ef;
+  --assistant-grad-start: #fff7f0;
   --assistant-grad-mid: #fffdf9;
-  --assistant-grad-end: #eef9fb;
+  --assistant-grad-end: #f0f7ff;
   --assistant-panel-border: color-mix(in oklab, var(--landing-border) 92%, #ffffff 8%);
   --assistant-panel-shadow: 0 22px 48px rgba(15, 23, 42, 0.14);
   --assistant-chip-bg: #ffffff;
   --assistant-chip-border: color-mix(in oklab, var(--landing-border-2) 78%, transparent);
-  --assistant-user-bubble: #df5a38;
+  --assistant-user-bubble: #e58d4d;
   --assistant-user-ink: #ffffff;
   --assistant-ai-bubble: #ffffff;
   --assistant-ai-ink: #243042;
@@ -343,41 +349,45 @@
 }
 
 .dark {
-  --landing-bg: #262a30;
-  --landing-bg-soft: #262a30;
-  --landing-surface: #2d323a;
-  --landing-surface-2: #343b45;
-  --landing-ink: #f8fafc;
-  --landing-muted: #d0d7e2;
-  --landing-muted-2: #9ca8ba;
-  --landing-border: #454f5f;
-  --landing-border-2: #5c687a;
-  --landing-accent: #f27a5e;
-  --landing-accent-strong: #e06749;
-  --landing-accent-soft: rgba(242, 122, 94, 0.1);
-  --landing-shadow-sm: 0 2px 8px rgba(8, 11, 16, 0.2);
-  --landing-shadow-md: 0 10px 22px rgba(8, 11, 16, 0.28);
-  --landing-shadow-lg: 0 18px 36px rgba(8, 11, 16, 0.34);
-  --landing-nav-bg: rgba(38, 42, 48, 0.92);
-  --landing-nav-bg-solid: rgba(38, 42, 48, 0.97);
-  --landing-footer-bg: #222833;
+  --landing-bg: #0f172a;
+  --landing-bg-soft: #131e30;
+  --landing-surface: #1e293b;
+  --landing-surface-2: #263140;
+  --landing-ink: #f1f5fb;
+  --landing-muted: #cbd5e1;
+  --landing-muted-2: #94a3b8;
+  --landing-border: #2d3f55;
+  --landing-border-2: #3d5268;
+  /* Lighter orange for dark mode readability */
+  --landing-accent: #f0a86a;
+  --landing-accent-strong: #e58d4d;
+  --landing-accent-soft: rgba(240, 168, 106, 0.12);
+  /* Navy as bg still works in dark; light blue for text use */
+  --landing-navy: #93c4ff;
+  --landing-navy-soft: rgba(147, 196, 255, 0.08);
+  --landing-shadow-sm: 0 2px 8px rgba(8, 11, 16, 0.22);
+  --landing-shadow-md: 0 10px 22px rgba(8, 11, 16, 0.3);
+  --landing-shadow-lg: 0 18px 36px rgba(8, 11, 16, 0.36);
+  --landing-nav-bg: rgba(15, 23, 42, 0.92);
+  --landing-nav-bg-solid: rgba(15, 23, 42, 0.97);
+  --landing-footer-bg: #0c1526;
   --landing-footer-ink: #f1f5fb;
   --landing-footer-muted: #b6c2d3;
   --landing-footer-head: #f7fbff;
-  --assistant-grad-start: #2f2f39;
-  --assistant-grad-mid: #2c3138;
-  --assistant-grad-end: #28343a;
+  --assistant-grad-start: #1c2a3e;
+  --assistant-grad-mid: #1a2535;
+  --assistant-grad-end: #182233;
   --assistant-panel-border: color-mix(in oklab, var(--landing-border) 86%, transparent);
   --assistant-panel-shadow: 0 26px 52px rgba(7, 9, 13, 0.5);
   --assistant-chip-bg: color-mix(in oklab, var(--landing-surface) 90%, transparent);
   --assistant-chip-border: color-mix(in oklab, var(--landing-border-2) 80%, transparent);
-  --assistant-user-bubble: #e47857;
-  --assistant-user-ink: #fffaf7;
+  --assistant-user-bubble: #f0a86a;
+  --assistant-user-ink: #fff7f0;
   --assistant-ai-bubble: color-mix(in oklab, var(--landing-surface) 94%, transparent);
   --assistant-ai-ink: #f0f5fc;
-  --assistant-section-answer: #343c47;
-  --assistant-section-next: #2f4238;
-  --assistant-section-note: #4d422e;
+  --assistant-section-answer: #243040;
+  --assistant-section-next: #1e3228;
+  --assistant-section-note: #35291a;
 }
 
 @layer components {
@@ -473,7 +483,7 @@
     border: 1px solid color-mix(in oklab, var(--landing-border-2) 76%, transparent);
     background: var(--landing-accent-soft);
     color: var(--landing-accent);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 1.1rem;
     font-weight: 700;
   }
@@ -532,8 +542,9 @@
 
   .landing-template-heading {
     color: var(--landing-ink);
-    font-family: var(--font-serif);
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
 
   .landing-template-copy {
@@ -545,14 +556,14 @@
     align-items: center;
     gap: 0.45rem;
     border-radius: 999px;
-    border: 1px solid var(--landing-border-2);
+    border: 1px solid color-mix(in oklab, var(--landing-accent) 30%, var(--landing-border));
     background: var(--landing-accent-soft);
     color: var(--landing-accent);
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    padding: 0.45rem 0.85rem;
+    padding: 0.42rem 0.82rem;
   }
 
   .landing-chip {
@@ -576,14 +587,13 @@
     border: 1px solid var(--landing-border);
     border-radius: 1.2rem;
     box-shadow: var(--landing-shadow-sm);
-    transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease, filter 260ms ease;
+    transition: transform 260ms ease, box-shadow 260ms ease, border-color 260ms ease;
   }
 
   .landing-card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-4px);
     border-color: var(--landing-border-2);
     box-shadow: var(--landing-shadow-md);
-    filter: saturate(1.02);
   }
 
   .landing-btn-coral {
@@ -592,12 +602,12 @@
     border: none;
     border-radius: 999px;
     transition: background 220ms ease, box-shadow 220ms ease;
-    box-shadow: 0 5px 16px rgba(224, 92, 58, 0.24);
+    box-shadow: 0 5px 16px rgba(229, 141, 77, 0.28);
   }
 
   .landing-btn-coral:hover {
     background: var(--landing-accent-strong);
-    box-shadow: 0 9px 22px rgba(224, 92, 58, 0.32);
+    box-shadow: 0 9px 22px rgba(229, 141, 77, 0.36);
   }
 
   .landing-hero-search {
@@ -611,8 +621,9 @@
 
   .landing-template .public-template-heading {
     color: var(--landing-ink);
-    font-family: var(--font-serif);
-    letter-spacing: -0.02em;
+    font-family: var(--font-sans);
+    font-weight: 700;
+    letter-spacing: -0.015em;
   }
 
   .landing-template .public-template-copy {
@@ -703,10 +714,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
     font-size: 1.88rem;
     font-weight: 700;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.02em;
     color: var(--landing-ink);
   }
 
@@ -911,7 +922,7 @@
   .assistant-bubble-user {
     background: var(--assistant-user-bubble);
     color: var(--assistant-user-ink);
-    box-shadow: 0 6px 18px rgba(223, 90, 56, 0.2);
+    box-shadow: 0 6px 18px rgba(229, 141, 77, 0.22);
   }
 
   .assistant-bubble-ai {
@@ -1099,7 +1110,7 @@
   .landing-template .public-template-heading {
     font-size: clamp(1.9rem, 8vw, 2.55rem);
     line-height: 1.1;
-    letter-spacing: -0.016em;
+    letter-spacing: -0.012em;
   }
 
   .landing-template .landing-template-copy,

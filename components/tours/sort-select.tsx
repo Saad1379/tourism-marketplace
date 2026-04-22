@@ -45,7 +45,7 @@ export function SortSelect({ value }: { value: SortValue }) {
       <span className="sr-only">Sort tours</span>
       <select
         aria-label="Sort tours"
-        className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        className="h-9 rounded-md border border-input px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         value={value}
         onChange={(event) => handleSortChange(event.target.value as SortValue)}
       >
