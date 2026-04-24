@@ -2,9 +2,9 @@ import type React from "react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Free Walking Tours | Explore Cities Worldwide | TipWalk",
+  title: "Free Walking Tours | Explore cities across Europe | TipWalk",
   description:
-    "Discover amazing free walking tours in 350+ cities worldwide. Book authentic local experiences with passionate guides. Pay what you want, tip-based tours.",
+    "Discover amazing free walking tours in 35+ cities across Europe. Book authentic local experiences with passionate guides. Pay what you want, tip-based tours.",
   keywords: [
     "free walking tours",
     "city tours",
@@ -17,18 +17,18 @@ export const metadata: Metadata = {
   ],
   alternates: { canonical: "/tours" },
   openGraph: {
-    title: "Free Walking Tours | Explore Cities Worldwide",
+    title: "Free Walking Tours | Explore cities across Europe",
     description:
-      "Discover amazing free walking tours in 350+ cities worldwide. Book authentic local experiences with passionate guides.",
+      "Discover amazing free walking tours in 35+ cities across Europe. Book authentic local experiences with passionate guides.",
     type: "website",
     url: "/tours",
     images: [{ url: "/og-tours.jpg", width: 1200, height: 630, alt: "Free Walking Tours Worldwide" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Free Walking Tours | Explore Cities Worldwide",
+    title: "Free Walking Tours | Explore cities across Europe",
     description:
-      "Discover amazing free walking tours in 350+ cities worldwide. Book authentic local experiences with passionate guides.",
+      "Discover amazing free walking tours in 35+ cities across Europe. Book authentic local experiences with passionate guides.",
     images: ["/og-tours.jpg"],
   },
 }

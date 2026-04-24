@@ -7,11 +7,11 @@ const SITE_URL = BRAND_SITE_URL
 export const metadata: Metadata = {
   title: "Traveler Reviews",
   description:
-    `Read authentic reviews from 48,000+ travelers who explored cities worldwide with ${BRAND_NAME} guides. Rated 4.8 out of 5 stars across 350+ destinations.`,
+    `Read authentic reviews from 48,000+ travelers who explored cities across Europe with ${BRAND_NAME} guides. Rated 4.8 out of 5 stars across 35+ destinations.`,
   keywords: ["tipwalk reviews", "walking tour reviews", "traveler testimonials", "guide ratings", "tour feedback"],
   openGraph: {
     title: withBrandSuffix("Traveler Reviews"),
-    description: "Read authentic reviews from 48,000+ travelers. Rated 4.8/5 across 350+ destinations.",
+    description: "Read authentic reviews from 48,000+ travelers. Rated 4.8/5 across 35+ destinations.",
     url: toCanonicalUrl("/reviews"),
     siteName: BRAND_NAME,
     type: "website",
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: withBrandSuffix("Traveler Reviews"),
-    description: "Read authentic reviews from 48,000+ travelers. Rated 4.8/5 across 350+ destinations.",
+    description: "Read authentic reviews from 48,000+ travelers. Rated 4.8/5 across 35+ destinations.",
   },
   alternates: { canonical: toCanonicalUrl("/reviews") },
 }

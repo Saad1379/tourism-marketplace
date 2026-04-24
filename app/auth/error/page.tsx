@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { AlertTriangle } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
 
@@ -18,38 +18,47 @@ export default async function AuthErrorPage({
   const errorMessage = params.error_description || params.error || "An unexpected error occurred"
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--landing-bg-soft)] px-5 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+        <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
           <TipWalkLogo size="lg" />
         </Link>
 
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-              <AlertTriangle className="h-8 w-8 text-destructive" />
+        <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+          <CardContent className="p-7 sm:p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="h-8 w-8" strokeWidth={2} />
             </div>
-            <CardTitle className="text-2xl font-bold">Authentication Error</CardTitle>
-            <CardDescription>Something went wrong during authentication</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="rounded-lg bg-destructive/5 border border-destructive/20 p-4">
-              <p className="text-sm text-destructive">{errorMessage}</p>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Authentication Error
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Something went wrong during authentication
+            </p>
+
+            <div className="mt-6 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-left">
+              <p className="text-xs text-destructive leading-relaxed">{errorMessage}</p>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Button asChild className="w-full">
+            <div className="mt-5 flex flex-col gap-2">
+              <Button
+                asChild
+                className="w-full rounded-full font-semibold shadow-[0_5px_16px_rgba(229,141,77,0.28)]"
+              >
                 <Link href="/login">Try Again</Link>
               </Button>
-              <Button asChild variant="outline" className="w-full bg-transparent">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full rounded-full bg-background border-border text-foreground font-semibold"
+              >
                 <Link href="/">Go to Homepage</Link>
               </Button>
             </div>
 
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="mt-4 text-xs text-muted-foreground">
               Need help?{" "}
-              <Link href="/contact" className="text-primary hover:underline">
+              <Link href="/contact" className="font-semibold text-primary hover:underline">
                 Contact Support
               </Link>
             </p>

@@ -659,14 +659,8 @@ export default function EditTourPage() {
           blockersRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
           return
         }
-      } else if (!values.title.trim()) {
-        const ok = await trigger(["title"])
-        if (!ok) {
-          setError("Add a title before saving the draft.")
-          setCurrentStep(1)
-          return
-        }
       }
+      // Drafts save in any state — no validation.
 
       const safeHighlights = values.highlights.filter((h) => h.trim())
       const safeDuration = values.duration ? parseFloat(values.duration) * 60 : 90

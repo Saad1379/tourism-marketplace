@@ -16,7 +16,7 @@ export function WebsiteStructuredData() {
     "@type": "WebSite",
     name: BRAND_NAME,
     url: SITE_URL,
-    description: "Free walking tours with passionate local guides in 350+ cities worldwide",
+    description: "Free walking tours with passionate local guides in 35+ cities across Europe",
     potentialAction: {
       "@type": "SearchAction",
       target: `${SITE_URL}/tours?search={search_term_string}`,

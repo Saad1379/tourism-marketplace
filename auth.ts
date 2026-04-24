@@ -26,6 +26,11 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
+  // Auth.js v5 normally reads AUTH_SECRET from the env, but passing it
+  // explicitly avoids "MissingSecret" errors when the dev server is started
+  // before the env file is updated, or in edge runtimes where process.env
+  // isn't fully surfaced.
+  secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60,

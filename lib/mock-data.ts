@@ -163,7 +163,7 @@ export const latestReviews = [
 export const stats = [
   { value: "50,000+", label: "Happy Travelers" },
   { value: "2,500+", label: "Local Guides" },
-  { value: "350+", label: "Cities Worldwide" },
+  { value: "35+", label: "cities across Europe" },
   { value: "4.8", label: "Average Rating" },
 ]
 

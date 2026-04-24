@@ -46,12 +46,17 @@ export async function POST(request: NextRequest) {
       minimum_attendees,
     } = body
 
-    if (!title || !city || !description || !duration_minutes || !max_capacity) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
-    }
+    const isPublish = status === "published"
 
-    if (String(description).trim().length < TOUR_DESCRIPTION_MIN_CHARS) {
-      return NextResponse.json({ error: DESCRIPTION_MIN_MESSAGE }, { status: 400 })
+    // Drafts can be saved in any state; only publish requires the full set
+    // of inputs and the min-description check.
+    if (isPublish) {
+      if (!title || !city || !description || !duration_minutes || !max_capacity) {
+        return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      }
+      if (String(description).trim().length < TOUR_DESCRIPTION_MIN_CHARS) {
+        return NextResponse.json({ error: DESCRIPTION_MIN_MESSAGE }, { status: 400 })
+      }
     }
 
     const profile = await ensureProfile(supabase, user as { id: string; email: string })
@@ -66,23 +71,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let safeCapacity = parseInt(max_capacity.toString(), 10) || 10
-    if (profile.guide_tier === "free") {
-      const { data: existingTours, error: toursError } = await supabase
+    const parsedCapacity = parseInt(String(max_capacity ?? ""), 10)
+    const capacityProvided = Number.isFinite(parsedCapacity) && parsedCapacity > 0
+    // Clamp a provided value to 7 on free; leave null otherwise so drafts
+    // don't silently invent a max_capacity the user never typed.
+    const safeCapacity: number | null = capacityProvided
+      ? profile.guide_tier === "free"
+        ? Math.min(parsedCapacity, 7)
+        : parsedCapacity
+      : null
+
+    if (profile.guide_tier === "free" && isPublish) {
+      // Only block publishing past the published-tour cap. Drafts are unlimited.
+      const { data: existingPublished, error: toursError } = await supabase
         .from("tours")
         .select("id")
         .eq("guide_id", user.id)
+        .eq("status", "published")
         .is("deleted_at", null)
         .limit(1)
 
-      if (!toursError && existingTours && existingTours.length > 0) {
+      if (!toursError && existingPublished && existingPublished.length > 0) {
         return NextResponse.json(
-          { error: "Free plan allows 1 tour. Upgrade to Pro for unlimited tours." },
+          { error: "Free plan allows 1 published tour. Upgrade to Pro for unlimited tours." },
           { status: 403 },
         )
       }
-
-      safeCapacity = Math.min(safeCapacity, 7)
     }
 
     const safeMinimumAttendees = parsePositiveInteger(minimum_attendees, 1)
@@ -90,7 +104,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "minimum_attendees must be at least 1" }, { status: 400 })
     }
 
-    if (safeMinimumAttendees > safeCapacity) {
+    if (isPublish && safeCapacity !== null && safeMinimumAttendees > safeCapacity) {
       return NextResponse.json(
         {
           error: `minimum_attendees cannot be greater than max_capacity (${safeCapacity})`,
@@ -133,7 +147,16 @@ async function createTour(supabase: any, guideId: string, data: any, guideProfil
   try {
     const normalizedKeywords = normalizeSeoKeywords(data.seo_keywords || [])
     const stopNames = sanitizeStopNames(data.highlights || [])
-    const { citySlug, tourSlug } = await generateUniqueTourSlugPair(supabase, data.city, data.title)
+
+    // `title` is NOT NULL in the DB, and the slug generator needs *some*
+    // string. For drafts the user may not have entered anything yet.
+    const effectiveTitle = (data.title && String(data.title).trim()) || "Untitled draft"
+    const effectiveCity = (data.city && String(data.city).trim()) || "unassigned"
+    const { citySlug, tourSlug } = await generateUniqueTourSlugPair(
+      supabase,
+      effectiveCity,
+      effectiveTitle,
+    )
 
     if (data.status === "published") {
       const publishIssues = validatePublishRequirements({
@@ -154,22 +177,28 @@ async function createTour(supabase: any, guideId: string, data: any, guideProfil
       }
     }
 
-    const neighbourhood = deriveNeighbourhood(data.title, data.city, stopNames)
+    const neighbourhood = deriveNeighbourhood(effectiveTitle, effectiveCity, stopNames)
     const guideFirstName = getGuideFirstName(guideProfile?.full_name)
     const shouldGenerateSeo = data.status === "published"
+
+    const parseIntOrNull = (v: unknown): number | null => {
+      if (v === undefined || v === null || v === "") return null
+      const n = parseInt(String(v), 10)
+      return Number.isFinite(n) ? n : null
+    }
 
     const { data: tour, error } = await supabase
       .from("tours")
       .insert({
         guide_id: guideId,
-        title: data.title,
-        city: data.city,
+        title: effectiveTitle,
+        city: data.city || null,
         city_slug: citySlug,
         tour_slug: tourSlug,
-        description: data.description,
+        description: data.description || null,
         highlights: stopNames,
-        duration_minutes: parseInt(data.duration_minutes.toString(), 10),
-        max_capacity: parseInt(data.max_capacity.toString(), 10),
+        duration_minutes: parseIntOrNull(data.duration_minutes),
+        max_capacity: parseIntOrNull(data.max_capacity),
         minimum_attendees: parsePositiveInteger(data.minimum_attendees, 1),
         languages: data.languages || [],
         categories: data.categories || [],
@@ -189,8 +218,8 @@ async function createTour(supabase: any, guideId: string, data: any, guideProfil
             })
           : null,
         photos: [],
-        meeting_point: data.meeting_point,
-        meeting_point_details: data.meeting_point_details,
+        meeting_point: data.meeting_point || null,
+        meeting_point_details: data.meeting_point_details || null,
         what_to_expect: data.what_to_expect || null,
         what_to_bring: data.what_to_bring || "",
         accessibility_info: data.accessibility_info || "",

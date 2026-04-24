@@ -556,30 +556,42 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="relative hidden lg:flex lg:w-1/2 shrink-0 overflow-hidden items-center justify-center bg-primary">
-        <div className="absolute inset-0 bg-[url('/walking-tour-city-travelers.jpg')] opacity-20 bg-cover bg-center" />
-        <div className="relative z-10 max-w-md px-10 text-center">
-          <h2 className="text-3xl font-bold text-white leading-snug">Discover the world with local guides</h2>
-          <p className="mt-4 text-base text-white/85 leading-relaxed">
-            Join thousands of travelers exploring cities through authentic tip-based tours led by passionate locals.
+      <div
+        className="relative hidden lg:flex lg:w-1/2 shrink-0 overflow-hidden items-center justify-center"
+        style={{ backgroundImage: "linear-gradient(135deg, #e58d4d 0%, #cf7334 100%)" }}
+      >
+        <div className="absolute inset-0 bg-[url('/adventure-travel-walking.jpg')] opacity-20 bg-cover bg-center" />
+        <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10" />
+        <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-white/10" />
+        <div className="relative z-10 max-w-md px-10 text-center text-white">
+          <h2 className="text-[2rem] font-extrabold tracking-tight leading-[1.15]">
+            Discover the world with local guides
+          </h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-white/85">
+            Join thousands of travelers exploring cities through authentic tip-based tours led by
+            passionate locals.
           </p>
-          <div className="mt-10 flex justify-center gap-10 text-white/80">
+          <div className="mt-10 flex justify-center gap-8">
             <div>
-              <p className="text-3xl font-bold text-white">{formatCompact(stats.completedBookings)}</p>
-              <p className="text-sm mt-0.5">Happy Travelers</p>
+              <p className="text-[26px] font-extrabold leading-none">
+                {formatCompact(stats.completedBookings)}
+              </p>
+              <p className="text-xs mt-1.5 text-white/85">Travelers</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-white">{formatCompact(stats.activeGuides)}</p>
-              <p className="text-sm mt-0.5">Local Guides</p>
+              <p className="text-[26px] font-extrabold leading-none">
+                {formatCompact(stats.activeGuides)}
+              </p>
+              <p className="text-xs mt-1.5 text-white/85">Guides</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-white">{formatCompact(stats.activeCities)}</p>
-              <p className="text-sm mt-0.5">Cities</p>
+              <p className="text-[26px] font-extrabold leading-none">
+                {formatCompact(stats.activeCities)}
+              </p>
+              <p className="text-xs mt-1.5 text-white/85">Cities</p>
             </div>
           </div>
         </div>
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-background/10" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-background/10" />
       </div>
     </div>
   )

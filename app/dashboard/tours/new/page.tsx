@@ -3,14 +3,14 @@
 /**
  * Tour creation wizard.
  *
- * State strategy (decided deliberately):
- *   - react-hook-form owns all serialisable form state; zod (via @hookform/resolvers)
- *     does validation. Step-level validation uses `trigger([...fields])`.
- *   - No Zustand store for this draft: nothing outside this page reads or writes
- *     the draft, so an extra global store would be premature. Persistence is a
- *     small `watch() -> localStorage` sync so the draft survives refreshes.
- *   - `images` (File blobs) stay in local state — they aren't JSON-serialisable,
- *     so persisting them would be misleading. Everything else rides the form.
+ * State strategy:
+ *   - react-hook-form owns form state; zod validates. Step-level checks use
+ *     `trigger([...fields])` when advancing.
+ *   - "Save as Draft" is the only way to persist work; it POSTs the tour to
+ *     the server with status='draft' regardless of validation state. Once
+ *     saved, the draft lives on the server — reopen it via the tours list.
+ *   - No client-side auto-save. Opening "Create Tour" always yields a fresh
+ *     form. Drafts belong on the server, not in localStorage.
  */
 
 import type React from "react"
@@ -155,8 +155,6 @@ interface TourImageUploadItem {
   stats?: TourImageCompressionStats
 }
 
-const DRAFT_STORAGE_KEY = "tour_creation_form"
-
 const defaultFormValues: TourFormData = {
   title: "",
   city: "",
@@ -245,65 +243,15 @@ export default function NewTourPage() {
       })
   }, [])
 
-  // Restore draft on mount (form + step).
-  useEffect(() => {
-    const raw = localStorage.getItem(DRAFT_STORAGE_KEY)
-    if (!raw) return
-    try {
-      const parsed = JSON.parse(raw) as { form?: Partial<TourFormData>; step?: number }
-      if (parsed.form) {
-        reset({ ...defaultFormValues, ...parsed.form })
-      }
-      if (typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 6) {
-        setCurrentStep(parsed.step)
-      }
-    } catch {
-      // ignore malformed drafts
-    }
-  }, [reset])
+  // No draft restore/persist: "Create Tour" always shows a fresh form. Drafts
+  // live on the server once the user clicks Save as Draft.
 
-  // Persist draft on any form change.
-  useEffect(() => {
-    const subscription = watch((values) => {
-      try {
-        localStorage.setItem(
-          DRAFT_STORAGE_KEY,
-          JSON.stringify({ form: values, step: currentStep }),
-        )
-      } catch {
-        // quota exceeded or similar; not worth surfacing
-      }
-    })
-    return () => subscription.unsubscribe()
-  }, [watch, currentStep])
-
-  // Persist step changes even when the form hasn't changed.
-  useEffect(() => {
-    try {
-      const existing = localStorage.getItem(DRAFT_STORAGE_KEY)
-      const parsed = existing ? JSON.parse(existing) : {}
-      localStorage.setItem(
-        DRAFT_STORAGE_KEY,
-        JSON.stringify({ form: parsed.form ?? getValues(), step: currentStep }),
-      )
-    } catch {
-      // ignore
-    }
-  }, [currentStep, getValues])
-
-  const clearDraft = () => {
-    if (confirm("Are you sure you want to delete this draft? This cannot be undone.")) {
-      localStorage.removeItem(DRAFT_STORAGE_KEY)
-      reset(defaultFormValues)
-      setImages([])
-      setCurrentStep(1)
-      setError(null)
-      setImagesError(null)
-    }
-  }
-
-  const clearSavedForm = () => {
-    localStorage.removeItem(DRAFT_STORAGE_KEY)
+  const resetForm = () => {
+    reset(defaultFormValues)
+    setImages([])
+    setCurrentStep(1)
+    setError(null)
+    setImagesError(null)
   }
 
   // Highlights helpers (array<string>)
@@ -599,19 +547,14 @@ export default function NewTourPage() {
           blockersRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
           return
         }
-      } else if (!values.title.trim()) {
-        // Drafts need a title at minimum so we have something to save.
-        const ok = await trigger(["title"])
-        if (!ok) {
-          setError("Add a title before saving the draft.")
-          setCurrentStep(1)
-          return
-        }
       }
+      // Drafts save in any state — no validation. The API accepts missing
+      // fields and the DB is configured to store partial drafts.
 
       const safeHighlights = values.highlights.filter((h) => h.trim())
-      const safeDuration = values.duration ? parseFloat(values.duration) * 60 : 90
-      const safeMaxCapacity = values.maxGroupSize ? parseInt(values.maxGroupSize, 10) : 10
+      const safeDuration = values.duration ? parseFloat(values.duration) * 60 : undefined
+      const parsedMax = values.maxGroupSize ? parseInt(values.maxGroupSize, 10) : NaN
+      const safeMaxCapacity = Number.isFinite(parsedMax) && parsedMax > 0 ? parsedMax : undefined
       const safeMinimumAttendees = resolvedMinimumAttendees
 
       // Step 1: Create tour WITHOUT images (metadata only)
@@ -747,7 +690,6 @@ export default function NewTourPage() {
       }
 
       router.push("/dashboard/tours")
-      clearSavedForm()
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred"
       setError(errorMessage)
@@ -799,7 +741,9 @@ export default function NewTourPage() {
                 variant="outline"
                 size="sm"
                 className="gap-1 sm:gap-2 bg-transparent text-destructive hover:text-destructive hidden md:flex w-full sm:w-auto"
-                onClick={clearDraft}
+                onClick={() => {
+                  if (confirm("Clear all entered fields?")) resetForm()
+                }}
               >
                 <Trash2 className="h-4 w-4" />
                 <span className="hidden lg:inline">Clear</span>

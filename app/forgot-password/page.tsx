@@ -46,27 +46,33 @@ export default function ForgotPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
+      <div className="flex min-h-screen items-center justify-center bg-(--landing-bg-soft) px-5 py-12">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+          <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
             <TipWalkLogo size="lg" />
           </Link>
 
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
-                <CheckCircle2 className="h-8 w-8 text-secondary" />
+          <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+            <CardContent className="p-7 sm:p-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
               </div>
-              <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
-              <CardDescription>We've sent password reset instructions to {email}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button asChild variant="outline" className="w-full bg-transparent">
-                <Link href="/login">
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Sign In
-                </Link>
-              </Button>
+              <h1 className="text-2xl font-bold tracking-tight">Check your email</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                We've sent password reset instructions to <span className="font-semibold text-foreground">{email}</span>.
+              </p>
+              <div className="mt-5">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="w-full rounded-full bg-background border-border text-foreground font-semibold"
+                >
+                  <Link href="/login">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Sign In
+                  </Link>
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -75,15 +81,15 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-(--landing-bg-soft) px-5 py-12">
       <div className="w-full max-w-md">
-        <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+        <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
           <TipWalkLogo size="lg" />
         </Link>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Forgot your password?</CardTitle>
+        <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold tracking-tight">Forgot your password?</CardTitle>
             <CardDescription>
               Enter your email address and we'll send you instructions to reset your password.
             </CardDescription>
@@ -114,7 +120,11 @@ export default function ForgotPasswordPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full rounded-full font-semibold shadow-[0_5px_16px_rgba(229,141,77,0.28)]"
+                disabled={isLoading}
+              >
                 {isLoading ? "Sending..." : "Send reset instructions"}
               </Button>
             </form>

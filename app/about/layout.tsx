@@ -4,7 +4,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "About Us | Our Story & Mission | TipWalk",
   description:
-    "Learn about TipWalk's mission to connect travelers with passionate local guides. Discover our story, values, and the team behind 2,500+ guides in 350+ cities.",
+    "Learn about TipWalk's mission to connect travelers with passionate local guides. Discover our story, values, and the team behind 2,500+ guides in 35+ cities.",
   keywords: [
     "about TipWalk",
     "free walking tours company",

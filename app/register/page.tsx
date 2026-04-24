@@ -235,28 +235,38 @@ export default function RegisterPage() {
 
   return (
     <div className="h-svh overflow-hidden flex flex-col lg:flex-row">
-      <div className="relative hidden lg:flex lg:w-1/2 shrink-0 overflow-hidden items-center justify-center bg-secondary">
+      <div
+        className="relative hidden lg:flex lg:w-1/2 shrink-0 overflow-hidden items-center justify-center"
+        style={{ backgroundImage: "linear-gradient(135deg, #e58d4d 0%, #cf7334 100%)" }}
+      >
         <div className="absolute inset-0 bg-[url('/adventure-travel-walking.jpg')] opacity-20 bg-cover bg-center" />
-        <div className="relative z-10 max-w-md px-10 text-center">
-          <h2 className="text-3xl font-bold text-white leading-snug">Start your journey today</h2>
-          <p className="mt-4 text-base text-white/85 leading-relaxed">
-            Whether you want to explore new cities or share your local knowledge, TipWalk connects you with unforgettable tip-based experiences.
+        <div className="absolute -right-20 -top-20 h-60 w-60 rounded-full bg-white/10" />
+        <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-white/10" />
+        <div className="relative z-10 max-w-md px-10 text-center text-white">
+          <h2 className="text-[2rem] font-extrabold tracking-tight leading-[1.15]">
+            Start your next adventure
+          </h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-white/85">
+            Whether you want to explore new cities or share your local knowledge, TipWalk connects
+            you with unforgettable tip-based experiences.
           </p>
-          <div className="mt-8 grid grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-background/10 backdrop-blur-sm p-5">
-              <Compass className="mx-auto h-7 w-7 text-white" />
-              <p className="mt-3 font-semibold text-white text-sm">For Travelers</p>
-              <p className="mt-1 text-xs text-white/80 leading-relaxed">Book free tours and discover cities like a local</p>
+          <div className="mt-10 grid grid-cols-2 gap-4">
+            <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-5 text-left">
+              <Compass className="h-6 w-6 text-white" />
+              <p className="mt-3 font-semibold text-sm">For Travelers</p>
+              <p className="mt-1 text-xs text-white/80 leading-relaxed">
+                Book free tours and discover cities like a local
+              </p>
             </div>
-            <div className="rounded-2xl bg-background/10 backdrop-blur-sm p-5">
-              <Users className="mx-auto h-7 w-7 text-white" />
-              <p className="mt-3 font-semibold text-white text-sm">For Guides</p>
-              <p className="mt-1 text-xs text-white/80 leading-relaxed">Share your passion and keep 100% of every tip</p>
+            <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-5 text-left">
+              <Users className="h-6 w-6 text-white" />
+              <p className="mt-3 font-semibold text-sm">For Guides</p>
+              <p className="mt-1 text-xs text-white/80 leading-relaxed">
+                Share your passion and keep 100% of every tip
+              </p>
             </div>
           </div>
         </div>
-        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-background/10" />
-        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-background/10" />
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto px-4 py-10 sm:px-6 lg:px-10 xl:px-16 bg-background">
@@ -280,28 +290,32 @@ export default function RegisterPage() {
               )}
 
               <div className="mb-5">
-                <Label className="mb-3 block text-sm font-medium">I want to join as a</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {(["tourist", "guide"] as const).map((currentRole) => (
+                <div className="grid grid-cols-2 gap-2">
+                  {(
+                    [
+                      { value: "tourist", label: "I'm a Traveler", desc: "Find & book tours" },
+                      { value: "guide", label: "I'm a Guide", desc: "Lead tours, earn tips" },
+                    ] as const
+                  ).map((option) => (
                     <button
-                      key={currentRole}
+                      key={option.value}
                       type="button"
-                      onClick={() => setRole(currentRole)}
+                      onClick={() => setRole(option.value)}
                       disabled={isLoading}
-                      className={`flex flex-col items-center rounded-xl border-2 p-4 transition-all ${
-                        role === currentRole
-                          ? "border-primary bg-primary/6"
-                          : "border-border hover:border-border/70 hover:bg-muted/60"
+                      className={`text-left rounded-xl border p-3.5 transition-all ${
+                        role === option.value
+                          ? "border-primary bg-primary/8"
+                          : "border-border hover:border-border/70 hover:bg-muted/40"
                       } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
-                      {currentRole === "tourist" ? (
-                        <Compass className={`h-6 w-6 ${role === currentRole ? "text-primary" : "text-muted-foreground"}`} />
-                      ) : (
-                        <Users className={`h-6 w-6 ${role === currentRole ? "text-primary" : "text-muted-foreground"}`} />
-                      )}
-                      <span className={`mt-2 text-sm font-medium capitalize ${role === currentRole ? "text-primary" : "text-foreground"}`}>
-                        {currentRole === "tourist" ? "Traveler" : "Guide"}
-                      </span>
+                      <p
+                        className={`text-sm font-semibold ${
+                          role === option.value ? "text-primary" : "text-foreground"
+                        }`}
+                      >
+                        {option.label}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{option.desc}</p>
                     </button>
                   ))}
                 </div>

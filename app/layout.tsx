@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: `%s | ${BRAND_NAME}`,
   },
   description:
-    `Discover the world with passionate local guides. Book free walking tours in 350+ cities worldwide. Experience authentic culture, history, and hidden gems with ${BRAND_NAME}.`,
+    `Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe. Experience authentic culture, history, and hidden gems with ${BRAND_NAME}.`,
   keywords: [
     "free walking tours",
     "free walking tours worldwide",
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     siteName: BRAND_NAME,
     title: withBrandSuffix("Free Walking Tours Worldwide"),
     description:
-      "Discover the world with passionate local guides. Book free walking tours in 350+ cities worldwide.",
+      "Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe.",
     images: [
       {
         url: "/adventure-travel-walking.jpg",
@@ -79,7 +79,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: withBrandSuffix("Free Walking Tours Worldwide"),
     description:
-      "Discover the world with passionate local guides. Book free walking tours in 350+ cities worldwide.",
+      "Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe.",
     images: ["/adventure-travel-walking.jpg"],
     creator: "@tipwalk",
   },

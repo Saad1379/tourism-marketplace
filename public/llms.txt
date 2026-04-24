@@ -1,12 +1,12 @@
 # TipWalk
 
-> Connect travelers with passionate local guides. Book free walking tours in 350+ cities worldwide.
+> Connect travelers with passionate local guides. Book free walking tours in 35+ cities across Europe.
 
 TipWalk is a platform for discovering and booking free walking tours led by knowledgeable local guides. Tours have no upfront cost — travelers tip guides at the end based on their experience.
 
 ## What Is TipWalk?
 
-TipWalk was founded in 2018 to make authentic travel accessible to everyone. We connect curious travelers with passionate local guides across 350+ cities, primarily in Europe. Our tip-based model keeps tours free to join while ensuring guides are rewarded for quality experiences.
+TipWalk was founded in 2018 to make authentic travel accessible to everyone. We connect curious travelers with passionate local guides across 35+ cities, primarily in Europe. Our tip-based model keeps tours free to join while ensuring guides are rewarded for quality experiences.
 
 ## For Travelers
 
@@ -34,7 +34,7 @@ TipWalk was founded in 2018 to make authentic travel accessible to everyone. We 
 
 - 50,000+ travelers served
 - 2,500+ local guides
-- 350+ cities covered
+- 35+ cities covered
 - 48,567 verified reviews
 - 4.8 / 5 average rating
 - 98% of travelers would recommend TipWalk

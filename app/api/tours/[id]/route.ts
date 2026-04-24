@@ -363,7 +363,14 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       )
     }
 
-    if (body.description !== undefined && String(body.description).trim().length < TOUR_DESCRIPTION_MIN_CHARS) {
+    // Only enforce the min-description rule when the tour is being (or
+    // already is) published. Drafts can be saved with any content.
+    const nextStatusForValidation = String(body.status ?? tour.status ?? "draft")
+    if (
+      nextStatusForValidation === "published" &&
+      body.description !== undefined &&
+      String(body.description).trim().length < TOUR_DESCRIPTION_MIN_CHARS
+    ) {
       return NextResponse.json({ error: DESCRIPTION_MIN_MESSAGE }, { status: 400 })
     }
 
@@ -388,6 +395,15 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
           : body.status === "draft"
             ? null
             : undefined,
+    }
+
+    // Don't overwrite the (NOT NULL) title with an empty string when the
+    // client cleared it for a draft save — keep the existing title.
+    if (
+      Object.prototype.hasOwnProperty.call(body, "title") &&
+      (typeof body.title !== "string" || body.title.trim() === "")
+    ) {
+      delete payload.title
     }
 
     if (body.seo_keywords !== undefined) {

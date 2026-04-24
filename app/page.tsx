@@ -251,7 +251,7 @@ export default async function HomePage() {
             </h1>
 
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80">
-              Book free walking tours in 350+ cities worldwide. Join a local guide, explore hidden gems, and tip at the end based on the value you received.
+              Book free walking tours in 35+ cities across Europe. Join a local guide, explore hidden gems, and tip at the end based on the value you received.
             </p>
 
             {/* Search bar */}
@@ -307,8 +307,8 @@ export default async function HomePage() {
                 </div>
                 {/* Floating badge */}
                 <div className="absolute -bottom-6 left-4 rounded-2xl bg-[#0b3884] px-6 py-4 text-center shadow-xl">
-                  <p className="text-3xl font-black text-white">350+</p>
-                  <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-white/70">Cities Worldwide</p>
+                  <p className="text-3xl font-black text-white">35+</p>
+                  <p className="mt-0.5 text-xs font-semibold uppercase tracking-wider text-white/70">Cities across Europe</p>
                 </div>
               </div>
 

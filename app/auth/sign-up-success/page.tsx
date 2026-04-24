@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Mail, CheckCircle2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
 
@@ -11,46 +11,47 @@ export const metadata = {
 
 export default function SignUpSuccessPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--landing-bg-soft)] px-5 py-12">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+        <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
           <TipWalkLogo size="lg" />
         </Link>
 
-        <Card className="border-border bg-background">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/15">
-              <CheckCircle2 className="h-8 w-8 text-secondary" />
+        <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+          <CardContent className="p-7 sm:p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+              <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
             </div>
-            <CardTitle className="text-2xl font-bold text-foreground">Check your email</CardTitle>
-            <CardDescription className="text-muted-foreground">We've sent you a confirmation link</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="rounded-lg bg-muted p-4">
-              <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-5 w-5 text-muted-foreground" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Confirm your email address</p>
-                  <p className="text-sm text-muted-foreground">
-                    Click the link in the email we sent you to verify your account and get started.
-                  </p>
-                </div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Check your email</h1>
+            <p className="mt-1 text-sm text-muted-foreground">We've sent you a confirmation link</p>
+
+            <div className="mt-6 flex items-start gap-3 rounded-xl bg-[color:var(--landing-bg-soft)] p-4 text-left">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  Confirm your email address
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                  Click the link in the email we just sent you to verify your account and get started.
+                </p>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-center text-sm text-muted-foreground">
-                Didn't receive the email? Check your spam folder or try again.
-              </p>
-              <div className="flex flex-col gap-2">
-                <Button asChild variant="outline" className="w-full bg-background border-border text-foreground/80">
-                  <Link href="/login">Back to Sign In</Link>
-                </Button>
-                <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
-                  <Link href="/">Go to Homepage</Link>
-                </Button>
-              </div>
+            <p className="mt-5 text-xs text-muted-foreground">
+              Didn't receive the email? Check your spam folder.
+            </p>
+
+            <div className="mt-4 flex flex-col gap-2">
+              <Button
+                asChild
+                variant="outline"
+                className="w-full rounded-full bg-background border-border text-foreground font-semibold"
+              >
+                <Link href="/login">Back to Sign In</Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full text-muted-foreground hover:text-foreground">
+                <Link href="/">Go to Homepage</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>

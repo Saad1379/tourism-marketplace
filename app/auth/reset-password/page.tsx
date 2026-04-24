@@ -66,20 +66,22 @@ export default function ResetPasswordPage() {
 
   if (isSuccess) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
+      <div className="flex min-h-screen items-center justify-center bg-[color:var(--landing-bg-soft)] px-5 py-12">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+          <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
             <TipWalkLogo size="lg" />
           </Link>
 
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10">
-                <CheckCircle2 className="h-8 w-8 text-secondary" />
+          <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+            <CardContent className="p-7 sm:p-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+                <CheckCircle2 className="h-8 w-8" strokeWidth={2.5} />
               </div>
-              <CardTitle className="text-2xl font-bold">Password updated!</CardTitle>
-              <CardDescription>Your password has been successfully reset. Redirecting to login...</CardDescription>
-            </CardHeader>
+              <h1 className="text-2xl font-bold tracking-tight">Password updated</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Your password has been successfully reset. Redirecting to login…
+              </p>
+            </CardContent>
           </Card>
         </div>
       </div>
@@ -87,15 +89,15 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--landing-bg-soft)] px-5 py-12">
       <div className="w-full max-w-md">
-        <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
+        <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
           <TipWalkLogo size="lg" />
         </Link>
 
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Set new password</CardTitle>
+        <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-2xl font-bold tracking-tight">Set new password</CardTitle>
             <CardDescription>Create a new password for your account</CardDescription>
           </CardHeader>
           <CardContent>
@@ -156,7 +158,11 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full rounded-full font-semibold shadow-[0_5px_16px_rgba(229,141,77,0.28)]"
+                disabled={isLoading}
+              >
                 {isLoading ? "Updating..." : "Update password"}
               </Button>
             </form>
