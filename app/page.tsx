@@ -194,11 +194,9 @@ export default async function HomePage() {
 
   /* Hero images */
   const heroBgTour = toursRaw?.[0] || discoveryTours?.[0]
-  const heroImgA = toursRaw?.[1] || featuredCities?.[0]
-  const heroImgB = toursRaw?.[2] || featuredCities?.[1]
   const heroBgSrc = heroBgTour ? resolveTourImage(heroBgTour) : "/Stonehenge1.jpg"
-  const aboutImgA = heroImgA ? (heroImgA.photos ? resolveTourImage(heroImgA) : resolveCityImage(heroImgA)) : "/placeholder.svg"
-  const aboutImgB = heroImgB ? (heroImgB.photos ? resolveTourImage(heroImgB) : resolveCityImage(heroImgB)) : "/placeholder.svg"
+  const aboutImgA = "/london-cityscape-big-ben.jpg"
+  const aboutImgB = "/amsterdam-canal-houses-boats.jpg"
 
   const featuredToursSchema = {
     "@context": "https://schema.org",
