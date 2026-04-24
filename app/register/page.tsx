@@ -173,6 +173,10 @@ export default function RegisterPage() {
             full_name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim(),
+            // Picked up by the handle_new_user trigger so the profile is
+            // created with the right role on first insert — we don't have to
+            // wait for the email-confirmation callback to fix it up.
+            requested_role: role,
           },
         },
       })

@@ -62,6 +62,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get("redirect") || ""
   const guidePending = searchParams.get("guide_pending") === "1"
+  const emailVerified = searchParams.get("verified") === "1"
 
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
@@ -160,16 +161,22 @@ export default function LoginPage() {
         return
       }
 
-      // Guard: block guides with unapproved applications
+      // Guard: block guides with unapproved applications. "pending" only fires
+      // after onboarding is submitted, so a fresh signup (onboarding_completed
+      // false, status NULL) still makes it through to /become-guide.
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role, guide_approval_status")
+        .select("role, guide_approval_status, onboarding_completed")
         .eq("id", probe.user.id)
         .single()
 
       const role = profile?.role || probe.user?.user_metadata?.role || "tourist"
 
-      if (role === "guide" && profile?.guide_approval_status === "pending") {
+      if (
+        role === "guide" &&
+        profile?.guide_approval_status === "pending" &&
+        profile?.onboarding_completed === true
+      ) {
         await supabase.auth.signOut()
         setError("Your guide application is currently under review. You will receive an email once it has been approved.")
         setIsLoading(false)
@@ -198,6 +205,8 @@ export default function LoginPage() {
         redirectUrl = redirectTo
       } else if (role === "admin") {
         redirectUrl = "/admin"
+      } else if (role === "guide" && profile?.onboarding_completed === false) {
+        redirectUrl = "/become-guide"
       } else if (role === "guide") {
         redirectUrl = "/dashboard"
       } else {
@@ -245,10 +254,18 @@ export default function LoginPage() {
         }
       }
 
-      const { data: mfaProfile } = await supabase.from("profiles").select("role, guide_approval_status").eq("id", data.user.id).single()
+      const { data: mfaProfile } = await supabase
+        .from("profiles")
+        .select("role, guide_approval_status, onboarding_completed")
+        .eq("id", data.user.id)
+        .single()
       const role = mfaProfile?.role || data.user?.user_metadata?.role || "tourist"
 
-      if (role === "guide" && mfaProfile?.guide_approval_status === "pending") {
+      if (
+        role === "guide" &&
+        mfaProfile?.guide_approval_status === "pending" &&
+        mfaProfile?.onboarding_completed === true
+      ) {
         await supabase.auth.signOut()
         setError("Your guide application is currently under review. You will receive an email once it has been approved.")
         setIsVerifyingMfa(false)
@@ -267,6 +284,8 @@ export default function LoginPage() {
         redirectUrl = redirectTo
       } else if (role === "admin") {
         redirectUrl = "/admin"
+      } else if (role === "guide" && mfaProfile?.onboarding_completed === false) {
+        redirectUrl = "/become-guide"
       } else if (role === "guide") {
         redirectUrl = "/dashboard"
       } else {
@@ -340,6 +359,14 @@ export default function LoginPage() {
             </CardHeader>
 
             <CardContent className="px-0 space-y-0">
+              {emailVerified && !error && (
+                <Alert className="mb-5 border-green-300 bg-green-50 text-green-900">
+                  <AlertCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription>
+                    Your email is verified. Sign in to continue.
+                  </AlertDescription>
+                </Alert>
+              )}
               {guidePending && !error && (
                 <Alert className="mb-5 border-yellow-300 bg-yellow-50 text-yellow-900">
                   <AlertCircle className="h-4 w-4 text-yellow-600" />

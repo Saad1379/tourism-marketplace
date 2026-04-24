@@ -1,96 +1,118 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 
+/**
+ * Email-confirmation / OAuth callback for Supabase auth.
+ *
+ * After the NextAuth refactor, NextAuth is the client-side session source of
+ * truth. To avoid ever leaving the user half-authenticated (Supabase cookie
+ * set, NextAuth session missing), we hand off to /auth/complete which reads
+ * the Supabase session and mints a NextAuth session via the supabase-session
+ * credentials provider. That works for both the email-confirmation flow
+ * (password signups) and the Supabase Google OAuth flow.
+ *
+ * Steps:
+ *   1. Exchange the code (sets Supabase cookies, lets us read the user).
+ *   2. Upgrade the profile if `?role=guide` is present (belt-and-suspenders
+ *      alongside the handle_new_user trigger, which reads `requested_role`
+ *      from metadata).
+ *   3. Redirect to /auth/complete?next=<target> with Supabase cookies still
+ *      set — the bridge page uses them to obtain a NextAuth session, then
+ *      forwards to <target>.
+ */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/"
+  const next = searchParams.get("next")
 
-  if (code) {
-    const supabase = await createClient()
+  if (!code) {
+    return NextResponse.redirect(`${origin}/auth/error?error=auth_callback_missing_code`)
+  }
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+  const supabase = await createClient()
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+  if (exchangeError) {
+    return NextResponse.redirect(`${origin}/auth/error?error=auth_callback_error`)
+  }
 
-    if (!exchangeError) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-      if (user) {
-        // 1. Fetch the user's existing profile
-        // We select only 'role' first to check migration status for 'onboarding_completed'
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single()
+  if (!user) {
+    return NextResponse.redirect(`${origin}/auth/error?error=auth_callback_no_user`)
+  }
 
-        if (profileError && profileError.code !== "PGRST116") {
-          console.error("[v0] Auth callback - Error fetching profile:", profileError.message)
-        }
+  // Fetch existing profile (may not exist yet for OAuth signups)
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single()
 
-        // 2. Determine target roles
-        const requestedRole = searchParams.get("role") as "tourist" | "guide" | null
-        const currentRoles = profile?.roles || ["tourist"]
-        let newRoles = [...currentRoles]
-        let onboardingCompleted = profile?.onboarding_completed ?? true
+  if (profileError && profileError.code !== "PGRST116") {
+    console.error("[auth/callback] profile fetch error:", profileError.message)
+  }
 
-        // Rule: If "Register as Guide" was clicked, ensure 'guide' is in the roles array
-        if (requestedRole === "guide" && !newRoles.includes("guide")) {
-          newRoles.push("guide")
-          onboardingCompleted = false // New guides need onboarding
-        }
+  const requestedRole = searchParams.get("role") as "tourist" | "guide" | null
+  const currentRoles: string[] = profile?.roles || ["tourist"]
+  const newRoles = [...currentRoles]
+  let onboardingCompleted: boolean = profile?.onboarding_completed ?? true
 
-        // Determine the "primary" role for backward compatibility
-        const primaryRole = newRoles.includes("guide") ? "guide" : "tourist"
+  if (requestedRole === "guide" && !newRoles.includes("guide")) {
+    newRoles.push("guide")
+    onboardingCompleted = false
+  }
 
-        console.log("[v0] Auth callback - session for:", user.id, "Current:", currentRoles, "Target:", newRoles)
+  const primaryRole = newRoles.includes("guide") ? "guide" : "tourist"
 
-        // 3. Update the profiles table if necessary
-        const needsUpdate = !profile || 
-                            JSON.stringify(currentRoles) !== JSON.stringify(newRoles) ||
-                            profile.role !== primaryRole ||
-                            profile.onboarding_completed !== onboardingCompleted
+  const needsUpdate =
+    !profile ||
+    JSON.stringify(currentRoles) !== JSON.stringify(newRoles) ||
+    profile.role !== primaryRole ||
+    profile.onboarding_completed !== onboardingCompleted
 
-        if (needsUpdate) {
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ 
-              role: primaryRole,
-              roles: newRoles,
-              onboarding_completed: onboardingCompleted
-            })
-            .eq("id", user.id)
+  if (needsUpdate) {
+    const updatePayload: Record<string, unknown> = {
+      role: primaryRole,
+      roles: newRoles,
+      onboarding_completed: onboardingCompleted,
+    }
+    // guide_approval_status is intentionally left NULL at signup; it becomes
+    // 'pending' only when the onboarding form is submitted.
 
-          if (updateError) {
-            console.error("[v0] Auth callback - Failed to update profile roles:", updateError.message)
-          }
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update(updatePayload)
+      .eq("id", user.id)
 
-          // 3b. Provision Guide records if they are now a guide
-          if (newRoles.includes("guide")) {
-            console.log("[v0] Auth callback - Provisioning guide records for:", user.id)
-            await supabase.from("guide_plans").upsert({ guide_id: user.id, plan_type: "free" })
-            await supabase.from("guide_credits").upsert({ guide_id: user.id, balance: 0 })
-          }
-        }
+    if (updateError) {
+      console.error("[auth/callback] profile update failed:", updateError.message)
+    }
 
-        // 4. Determine redirect path
-        let redirectPath = "/tours" // Default for tourists
-        
-        if (newRoles.includes("guide")) {
-          // If they haven't completed onboarding, send them back to the guide wizard
-          if (!onboardingCompleted) {
-            redirectPath = "/become-guide"
-          } else {
-            redirectPath = "/dashboard"
-          }
-        }
-
-        return NextResponse.redirect(`${origin}${next === "/" ? redirectPath : next}`)
-      }
+    // Provision guide-side records when the user is now a guide.
+    if (newRoles.includes("guide")) {
+      await supabase.from("guide_plans").upsert({ guide_id: user.id, plan_type: "free" })
+      await supabase.from("guide_credits").upsert({ guide_id: user.id, balance: 0 })
     }
   }
 
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/error?error=auth_callback_error`)
+  // Figure out where the user should land after they sign in.
+  let target: string
+  if (next && next !== "/") {
+    target = next
+  } else if (newRoles.includes("guide") && !onboardingCompleted) {
+    target = "/become-guide"
+  } else if (primaryRole === "guide") {
+    target = "/dashboard"
+  } else {
+    target = "/profile"
+  }
+
+  // Keep the Supabase session cookies — the /auth/complete bridge needs them
+  // to read the access token and mint a NextAuth session via the
+  // supabase-session credentials provider.
+  const completeUrl = new URL("/auth/complete", origin)
+  completeUrl.searchParams.set("next", target)
+  return NextResponse.redirect(completeUrl.toString())
 }
