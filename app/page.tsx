@@ -138,7 +138,7 @@ function getTourAlt(tour: any) {
 export default async function HomePage() {
   const [toursRaw, featuredCities, reviewsRaw, landingStats, discoveryTours] = await Promise.all([
     getPublicTours({ limit: 12, sort: "recommended" }),
-    getFeaturedCities(6),
+    getFeaturedCities(),
     getPublicReviews(6),
     getLandingStats(),
     getPublicTours({ limit: 100, sort: "recommended" }),
@@ -158,8 +158,8 @@ export default async function HomePage() {
       ? Array.from(cityCountMap.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name]) => ({ name }))
       : featuredCities.slice(0, 5).map((c) => ({ name: c.name }))
   )
-  const destinationCities = featuredCities.slice(0, 6)
-
+  const destinationCities = featuredCities.slice(0, 7)
+  console.log("featuredCities = ", featuredCities)
   /* Country map */
   const cityCountryMap = new Map<string, string>()
   for (const city of featuredCities) {

@@ -1,11 +1,31 @@
 import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
-import type { User, Session } from '@supabase/supabase-js'
 import type { Profile } from '@/lib/supabase/bootstrap'
 
+export interface AuthUser {
+  id: string
+  email: string | null
+  name?: string | null
+  image?: string | null
+  role?: 'tourist' | 'guide' | 'admin' | null
+  // Back-compat fields for code that previously expected a Supabase User.
+  user_metadata?: Record<string, any>
+  app_metadata?: Record<string, any>
+}
+
+export interface AuthSession {
+  user: AuthUser
+  supabaseAccessToken?: string | null
+  supabaseRefreshToken?: string | null
+  expires?: string | null
+  // Back-compat: Supabase session shape.
+  access_token?: string | null
+  refresh_token?: string | null
+}
+
 interface UserState {
-  user: User | null
-  session: Session | null
+  user: AuthUser | null
+  session: AuthSession | null
   profile: Profile | null
   isLoading: boolean
   error: Error | null
@@ -13,10 +33,10 @@ interface UserState {
   credits: number
   expiresAt: string | null
   planLoading: boolean
-  
+
   // Actions
-  setUser: (user: User | null) => void
-  setSession: (session: Session | null) => void
+  setUser: (user: AuthUser | null) => void
+  setSession: (session: AuthSession | null) => void
   setProfile: (profile: Profile | null) => void
   setLoading: (isLoading: boolean) => void
   setError: (error: Error | null) => void
@@ -24,7 +44,7 @@ interface UserState {
   updateProfile: (updates: Partial<Profile>) => void
   setPlan: (planType: 'free' | 'pro', credits: number, expiresAt: string | null) => void
   fetchPlan: () => Promise<void>
-  
+
   // Computed getters
   isAuthenticated: () => boolean
   isGuide: () => boolean
@@ -49,26 +69,26 @@ export const useUserStore = create<UserState>()(
         planLoading: true,
 
         setUser: (user) => set({ user }),
-        
+
         setSession: (session) => set({ session, user: session?.user ?? null }),
-        
+
         setProfile: (profile) => set({ profile }),
-        
+
         setLoading: (isLoading) => set({ isLoading }),
-        
+
         setError: (error) => set({ error }),
-        
-        clearAuth: () => set({ 
-          user: null, 
-          session: null, 
-          profile: null, 
+
+        clearAuth: () => set({
+          user: null,
+          session: null,
+          profile: null,
           error: null,
           planType: 'free',
           credits: 0,
           expiresAt: null,
-          planLoading: false
+          planLoading: false,
         }),
-        
+
         updateProfile: (updates) => {
           const currentProfile = get().profile
           if (currentProfile) {
@@ -88,11 +108,11 @@ export const useUserStore = create<UserState>()(
           try {
             const response = await fetch('/api/plan')
             const data = await response.json()
-            set({ 
+            set({
               planType: data.planType || 'free',
               credits: data.credits || 0,
               expiresAt: data.expiresAt || null,
-              planLoading: false
+              planLoading: false,
             })
           } catch (error) {
             console.error('Failed to fetch plan:', error)
@@ -100,23 +120,22 @@ export const useUserStore = create<UserState>()(
           }
         },
 
-        // Computed getters
-        isAuthenticated: () => !!get().user && !!get().session,
-        
+        isAuthenticated: () => !!get().user,
+
         isGuide: () => get().profile?.role === 'guide',
-        
+
         isTourist: () => get().profile?.role === 'tourist',
-        
+
         isProGuide: () => {
           const state = get()
           return state.profile?.role === 'guide' && state.planType === 'pro'
         },
-        
+
         isFreeGuide: () => {
           const state = get()
           return state.profile?.role === 'guide' && state.planType === 'free'
         },
-        
+
         isVerifiedGuide: () => {
           const profile = get().profile
           return profile?.role === 'guide' && profile?.guide_verified === true
@@ -125,6 +144,7 @@ export const useUserStore = create<UserState>()(
       {
         name: 'user-storage',
         partialize: (state) => ({
+          user: state.user,
           profile: state.profile,
           planType: state.planType,
           credits: state.credits,

@@ -97,6 +97,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Free-plan tour cap: only enforced on publish. Drafts are unlimited.
+    const { data: plan } = await supabase
+      .from("guide_plans")
+      .select("plan_type")
+      .eq("guide_id", user.id)
+      .maybeSingle()
+
+    if (!plan || plan.plan_type !== "pro") {
+      const { data: planSettings } = await supabase
+        .from("plan_settings")
+        .select("max_tours")
+        .eq("plan_type", "free")
+        .maybeSingle()
+
+      const maxTours = Number(planSettings?.max_tours ?? 1)
+
+      const { count: publishedCount } = await supabase
+        .from("tours")
+        .select("id", { count: "exact", head: true })
+        .eq("guide_id", user.id)
+        .eq("status", "published")
+        .neq("id", tour_id)
+
+      if ((publishedCount ?? 0) >= maxTours) {
+        return NextResponse.json(
+          {
+            error: `Free plan limit reached: only ${maxTours} published tour${maxTours === 1 ? "" : "s"} allowed. Upgrade to Pro to publish more.`,
+          },
+          { status: 403 },
+        )
+      }
+    }
+
     const neighbourhood = deriveNeighbourhood(tour.title, tour.city, stopNames)
     const updatePayload: Record<string, unknown> = {
       status: "published",

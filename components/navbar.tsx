@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useAuth } from "@/lib/supabase/auth-context"
+import { signOut as nextAuthSignOut } from "next-auth/react"
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useToast } from "@/hooks/use-toast"
 import { useMessageNotificationsStore } from "@/store/message-notifications-store"
 import { useRealtimeMessageNotifications } from "@/lib/messaging/useRealtimeMessageNotifications"
@@ -118,11 +120,14 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
   const handleSignOut = async () => {
     setSigningOut(true)
     try {
-      const res = await fetch("/api/auth/signout", { method: "POST" })
-
-      if (!res.ok) {
-        throw new Error("Failed to sign out")
+      try {
+        const supabase = createSupabaseBrowserClient()
+        await supabase.auth.signOut()
+      } catch {
+        // Best-effort - NextAuth is source of truth for session persistence.
       }
+
+      await nextAuthSignOut({ redirect: false })
 
       toast({ title: "Success", description: "Signed out successfully" })
       router.replace("/login")

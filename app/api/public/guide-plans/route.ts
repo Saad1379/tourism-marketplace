@@ -21,7 +21,7 @@ type GuidePlanCard = {
 
 const DEFAULT_FREE_LIMITS = {
   max_tours: 1,
-  max_schedules_per_week: 2,
+  max_schedules_per_week: 5,
   max_tourist_capacity: 7,
 }
 

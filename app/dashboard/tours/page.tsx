@@ -158,12 +158,12 @@ export default function ToursPage() {
         }, 0))
     : 0
 
-  const canCreateTour = guideTier === "pro" || activeTours.length < tierLimits.maxTours
+  // Drafts are unlimited on all plans; only publishing is capped on free.
+  const canCreateTour = true
+  const atPublishedLimit = guideTier === "free" && activeTours.length >= tierLimits.maxTours
 
   const handleCreateTour = () => {
-    if (!canCreateTour) {
-      // setShowUpgradeDialog(true)
-    }
+    // Kept for interface compatibility; no-op now that creation is always allowed.
   }
 
   const handleDeleteTour = async (tourId: string) => {
@@ -216,16 +216,17 @@ export default function ToursPage() {
             )}
           </section>
 
-          {guideTier === "free" && activeTours.length >= tierLimits.maxTours && (
+          {atPublishedLimit && (
             <Card className="mb-6 border-primary/30 bg-primary/10">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-primary mt-0.5" />
                   <div className="flex-1">
-                    <h3 className="font-medium text-primary">Tour Limit Reached</h3>
+                    <h3 className="font-medium text-primary">Publish Limit Reached</h3>
                     <p className="text-sm text-primary mt-1">
-                      You have reached your limit of {formatTourLimit(tierLimits.maxTours)} on the Free plan. Upgrade to
-                      Pro for unlimited tours and higher guest capacity.
+                      You have {formatTourLimit(tierLimits.maxTours)} published on the Free plan. You can keep
+                      drafting new tours, but you'll need to unpublish one (or upgrade to Pro) before publishing
+                      another.
                     </p>
                   </div>
                   <Link href="/dashboard/upgrade">

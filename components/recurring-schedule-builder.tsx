@@ -24,13 +24,21 @@ interface RecurringScheduleBuilderProps {
   tourLanguages: string[]
   onGenerate: (schedules: any[]) => void
   existingSchedules?: any[]
+  defaultCapacity?: number
+  maxCapacity?: number
 }
 
-export function RecurringScheduleBuilder({ tourLanguages, onGenerate, existingSchedules = [] }: RecurringScheduleBuilderProps) {
+export function RecurringScheduleBuilder({
+  tourLanguages,
+  onGenerate,
+  existingSchedules = [],
+  defaultCapacity = 8,
+  maxCapacity = 50,
+}: RecurringScheduleBuilderProps) {
   const [showRecurring, setShowRecurring] = useState(true)
   const [selectedDays, setSelectedDays] = useState<number[]>([1, 3, 5]) // Mon, Wed, Fri default
   const [time, setTime] = useState("10:00")
-  const [capacity, setCapacity] = useState("8")
+  const [capacity, setCapacity] = useState(String(defaultCapacity))
   const [language, setLanguage] = useState(tourLanguages[0] || "English")
   const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0])
   const [weeksCount, setWeeksCount] = useState("8")
@@ -92,7 +100,7 @@ export function RecurringScheduleBuilder({ tourLanguages, onGenerate, existingSc
         const schedule = {
           id: `temp_${Date.now()}_${Math.random()}`,
           start_time: isoString,
-          capacity: parseInt(capacity) || 8,
+          capacity: Math.min(parseInt(capacity) || defaultCapacity, maxCapacity),
           language: language,
           startDate: scheduleDate.toISOString().split("T")[0],
           time: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
@@ -192,7 +200,7 @@ export function RecurringScheduleBuilder({ tourLanguages, onGenerate, existingSc
                   value={capacity}
                   onChange={(e) => setCapacity(e.target.value)}
                   min="1"
-                  max="50"
+                  max={String(maxCapacity)}
                 />
               </div>
             </div>

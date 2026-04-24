@@ -114,7 +114,7 @@ const fallbackGuidePlans: GuidePlanCard[] = [
     cta: "Start for Free",
     features: [
       "Up to 1 published tour",
-      "Up to 2 schedules per week",
+      "Up to 5 schedules per week",
       "Up to 7 travelers per tour",
       "Guide profile, bookings, and messaging",
     ],
@@ -189,7 +189,7 @@ const fallbackLandingStats: LandingStatsResponse = {
 
 const FREE_PLAN_LIMITS = {
   maxGuestsPerTour: 7,
-  maxToursPerWeek: 2,
+  maxToursPerWeek: 5,
 }
 
 const PRO_CALCULATOR_LIMITS = {

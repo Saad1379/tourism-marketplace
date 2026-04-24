@@ -1,12 +1,39 @@
 "use client"
 
+/**
+ * Tour creation wizard.
+ *
+ * State strategy (decided deliberately):
+ *   - react-hook-form owns all serialisable form state; zod (via @hookform/resolvers)
+ *     does validation. Step-level validation uses `trigger([...fields])`.
+ *   - No Zustand store for this draft: nothing outside this page reads or writes
+ *     the draft, so an extra global store would be premature. Persistence is a
+ *     small `watch() -> localStorage` sync so the draft survives refreshes.
+ *   - `images` (File blobs) stay in local state — they aren't JSON-serialisable,
+ *     so persisting them would be misleading. Everything else rides the form.
+ */
+
 import type React from "react"
 
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import Image from "next/image"
-import { ArrowLeft, Upload, Plus, Trash2, MapPin, Save, Eye, CheckCircle2, AlertCircle, Clock, Users, Star, GripVertical, ExternalLink } from "lucide-react"
+import { useForm, Controller, type Resolver } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import {
+  ArrowLeft,
+  Upload,
+  Plus,
+  Trash2,
+  MapPin,
+  Save,
+  Eye,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  ExternalLink,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -64,15 +91,62 @@ const categories = [
   "Religious Sites",
 ]
 
+const scheduleSchema = z.object({
+  id: z.string(),
+  language: z.string(),
+  time: z.string().min(1, "Time is required"),
+  capacity: z.number().min(1, "At least 1"),
+  recurrence: z.enum(["once", "weekly", "daily"]),
+  startDate: z.string().min(1, "Date is required"),
+  endDate: z.string().optional(),
+  daysOfWeek: z.array(z.number()).optional(),
+})
+
+const tourFormSchema = z
+  .object({
+    title: z.string().trim().min(1, "Title is required"),
+    city: z.string().min(1, "Please select a city"),
+    duration: z.string().min(1, "Please select a duration"),
+    maxGroupSize: z.string().min(1, "Please select a group size"),
+    minimumAttendees: z
+      .string()
+      .regex(/^\d+$/, "Enter a whole number")
+      .refine((v) => parseInt(v, 10) >= 1, "Must be at least 1"),
+    languages: z.array(z.string()).min(1, "Select at least one language"),
+    categories: z.array(z.string()).min(1, "Select at least one category"),
+    description: z.string().trim().min(1, "Description is required"),
+    seoKeywords: z.string().default(""),
+    highlights: z.array(z.string()).default([""]),
+    whatToExpect: z.string().default(""),
+    whatToBring: z.string().default(""),
+    accessibility_info: z.string().default(""),
+    schedules: z.array(scheduleSchema).default([]),
+    meetingPoint: z.string().trim().min(1, "Meeting point is required"),
+    meetingPointDetails: z.string().default(""),
+  })
+  .superRefine((data, ctx) => {
+    const max = parseInt(data.maxGroupSize, 10)
+    const min = parseInt(data.minimumAttendees, 10)
+    if (Number.isFinite(max) && Number.isFinite(min) && min > max) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["minimumAttendees"],
+        message: `Minimum attendees cannot exceed maximum group size (${max})`,
+      })
+    }
+  })
+
+type TourFormData = z.infer<typeof tourFormSchema>
+
 interface ScheduleRow {
   id: string
   language: string
   time: string
   capacity: number
-  recurrence: 'once' | 'weekly' | 'daily'
+  recurrence: "once" | "weekly" | "daily"
   startDate: string
   endDate?: string
-  daysOfWeek?: number[] // 0-6, where 0 is Sunday
+  daysOfWeek?: number[]
 }
 
 interface TourImageUploadItem {
@@ -81,180 +155,244 @@ interface TourImageUploadItem {
   stats?: TourImageCompressionStats
 }
 
-const MAX_SCHEDULES_PER_TOUR_FREE = 1; // Declare MAX_SCHEDULES_PER_TOUR_FREE variable
+const DRAFT_STORAGE_KEY = "tour_creation_form"
+
+const defaultFormValues: TourFormData = {
+  title: "",
+  city: "",
+  duration: "",
+  maxGroupSize: "",
+  minimumAttendees: "1",
+  languages: [],
+  categories: [],
+  description: "",
+  seoKeywords: "",
+  highlights: [""],
+  whatToExpect: "",
+  whatToBring: "",
+  accessibility_info: "",
+  schedules: [],
+  meetingPoint: "",
+  meetingPointDetails: "",
+}
+
+const stepFieldMap: Record<number, (keyof TourFormData)[]> = {
+  1: ["title", "city", "duration", "maxGroupSize", "minimumAttendees", "languages", "categories"],
+  2: ["description"],
+  4: ["schedules"],
+  5: ["meetingPoint"],
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return <p className="text-xs text-destructive mt-1">{message}</p>
+}
 
 export default function NewTourPage() {
   const router = useRouter()
   const { profile } = useAuth()
   const planType = useUserStore((s) => s.planType)
   const planLoading = useUserStore((s) => s.planLoading)
+
   const [currentStep, setCurrentStep] = useState(1)
   const [images, setImages] = useState<TourImageUploadItem[]>([])
   const [photoWarnings, setPhotoWarnings] = useState<string[]>([])
-  const [highlights, setHighlights] = useState<string[]>([""])
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [schedules, setSchedules] = useState<ScheduleRow[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
-  const [formData, setFormData] = useState({
-    title: "",
-    city: "",
-    description: "",
-    seoKeywords: "",
-    duration: "",
-    maxGroupSize: "",
-    minimumAttendees: "1",
-    meetingPoint: "",
-    meetingPointDetails: "",
-    whatToExpect: "",
-    whatToBring: "",
-    accessibility_info: "",
+  const [imagesError, setImagesError] = useState<string | null>(null)
+  const [availableCities, setAvailableCities] = useState<
+    { slug: string; name: string; country: string }[]
+  >([])
+
+  const form = useForm<TourFormData>({
+    resolver: zodResolver(tourFormSchema) as Resolver<TourFormData>,
+    defaultValues: defaultFormValues,
+    mode: "onTouched",
   })
-  const [tourStatus, setTourStatus] = useState("draft") // Declare tourStatus state
-  const [availableCities, setAvailableCities] = useState<{ slug: string; name: string; country: string }[]>([])
+  const {
+    register,
+    control,
+    watch,
+    setValue,
+    getValues,
+    trigger,
+    reset,
+    formState: { errors },
+  } = form
+
+  const highlights = watch("highlights")
+  const schedules = watch("schedules")
+  const selectedLanguages = watch("languages")
+  const selectedCategories = watch("categories")
+  const title = watch("title")
+  const city = watch("city")
+  const duration = watch("duration")
+  const maxGroupSize = watch("maxGroupSize")
+  const minimumAttendees = watch("minimumAttendees")
+  const description = watch("description")
+  const seoKeywordsRaw = watch("seoKeywords")
+  const meetingPoint = watch("meetingPoint")
 
   // Fetch available cities from DB
   useEffect(() => {
     fetch("/api/cities")
       .then((r) => r.json())
-      .then((json) => { if (json.cities) setAvailableCities(json.cities) })
-      .catch(() => {}) // silently fail; cities just won't populate
+      .then((json) => {
+        if (json.cities) setAvailableCities(json.cities)
+      })
+      .catch(() => {
+        // silently fail; cities just won't populate
+      })
   }, [])
 
-  // Load form state from localStorage on mount
+  // Restore draft on mount (form + step).
   useEffect(() => {
-    const savedState = localStorage.getItem("tour_creation_form")
-    if (savedState) {
-      try {
-        const { formData: savedFormData, highlights: savedHighlights, selectedLanguages: savedLangs, schedules: savedSchedules, currentStep: savedStep } = JSON.parse(savedState)
-        setFormData((prev) => ({
-          ...prev,
-          ...savedFormData,
-          seoKeywords: savedFormData?.seoKeywords || "",
-          minimumAttendees:
-            typeof savedFormData?.minimumAttendees === "string" && savedFormData.minimumAttendees.trim()
-              ? savedFormData.minimumAttendees
-              : prev.minimumAttendees,
-        }))
-        setHighlights(savedHighlights)
-        setSelectedLanguages(savedLangs)
-        setSchedules(savedSchedules)
-        setCurrentStep(savedStep || 1)
-      } catch {
-        // Ignore malformed local draft payloads.
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY)
+    if (!raw) return
+    try {
+      const parsed = JSON.parse(raw) as { form?: Partial<TourFormData>; step?: number }
+      if (parsed.form) {
+        reset({ ...defaultFormValues, ...parsed.form })
       }
+      if (typeof parsed.step === "number" && parsed.step >= 1 && parsed.step <= 6) {
+        setCurrentStep(parsed.step)
+      }
+    } catch {
+      // ignore malformed drafts
     }
-  }, [])
+  }, [reset])
 
-  // Save form state to localStorage whenever it changes
+  // Persist draft on any form change.
   useEffect(() => {
-    const stateToSave = { formData, highlights, selectedLanguages, schedules, currentStep }
-    localStorage.setItem("tour_creation_form", JSON.stringify(stateToSave))
-  }, [formData, highlights, selectedLanguages, schedules, currentStep])
+    const subscription = watch((values) => {
+      try {
+        localStorage.setItem(
+          DRAFT_STORAGE_KEY,
+          JSON.stringify({ form: values, step: currentStep }),
+        )
+      } catch {
+        // quota exceeded or similar; not worth surfacing
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [watch, currentStep])
 
-  // Clear draft function
+  // Persist step changes even when the form hasn't changed.
+  useEffect(() => {
+    try {
+      const existing = localStorage.getItem(DRAFT_STORAGE_KEY)
+      const parsed = existing ? JSON.parse(existing) : {}
+      localStorage.setItem(
+        DRAFT_STORAGE_KEY,
+        JSON.stringify({ form: parsed.form ?? getValues(), step: currentStep }),
+      )
+    } catch {
+      // ignore
+    }
+  }, [currentStep, getValues])
+
   const clearDraft = () => {
     if (confirm("Are you sure you want to delete this draft? This cannot be undone.")) {
-      localStorage.removeItem("tour_creation_form")
-      setFormData({
-        title: "",
-        city: "",
-        description: "",
-        seoKeywords: "",
-        duration: "",
-        maxGroupSize: "",
-        minimumAttendees: "1",
-        meetingPoint: "",
-        meetingPointDetails: "",
-        whatToExpect: "",
-        whatToBring: "",
-        accessibility_info: "",
-      })
-      setHighlights([""])
-      setSelectedLanguages([])
-      setSchedules([])
+      localStorage.removeItem(DRAFT_STORAGE_KEY)
+      reset(defaultFormValues)
+      setImages([])
       setCurrentStep(1)
       setError(null)
+      setImagesError(null)
     }
   }
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+  const clearSavedForm = () => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY)
   }
 
-  const addHighlight = () => {
-    setHighlights([...highlights, ""])
-  }
-
-  const removeHighlight = (index: number) => {
-    setHighlights(highlights.filter((_, i) => i !== index))
-  }
-
+  // Highlights helpers (array<string>)
+  const addHighlight = () => setValue("highlights", [...highlights, ""], { shouldDirty: true })
+  const removeHighlight = (index: number) =>
+    setValue(
+      "highlights",
+      highlights.filter((_, i) => i !== index),
+      { shouldDirty: true, shouldValidate: true },
+    )
   const updateHighlight = (index: number, value: string) => {
-    const updated = [...highlights]
-    updated[index] = value
-    setHighlights(updated)
+    const next = [...highlights]
+    next[index] = value
+    setValue("highlights", next, { shouldDirty: true })
   }
 
   // Free plan limits
-  const MAX_TOURS_FREE = 1
   const effectiveTier = planLoading ? profile?.guide_tier ?? "free" : planType
   const isFreePlan = effectiveTier === "free"
   const canUseLargeGroups = !planLoading && !isFreePlan
   const defaultCapacity = !planLoading && isFreePlan ? 7 : 10
 
+  // Schedule helpers
   const addSchedule = (lang: string) => {
     const newSchedule: ScheduleRow = {
-      id: `schedule_${Date.now()}`,
+      id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       language: lang,
       time: "10:00",
       capacity: defaultCapacity,
-      recurrence: 'once',
-      startDate: new Date().toISOString().split('T')[0],
+      recurrence: "once",
+      startDate: new Date().toISOString().split("T")[0],
     }
-    setSchedules([...schedules, newSchedule])
+    setValue("schedules", [...schedules, newSchedule], { shouldDirty: true, shouldValidate: true })
   }
 
   const handleRecurringSchedules = (newSchedules: any[]) => {
-    setSchedules((prev) => {
-      const updated = [...prev, ...newSchedules]
-      return updated
+    // The RecurringScheduleBuilder emits rows without a `recurrence` field and
+    // with extra keys (start_time, isNew). Normalise to the ScheduleRow shape
+    // the zod schema expects, otherwise validation fails silently.
+    const normalized: ScheduleRow[] = newSchedules.map((s) => ({
+      id:
+        typeof s.id === "string" && s.id
+          ? s.id
+          : `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      language: String(s.language || ""),
+      time: String(s.time || ""),
+      capacity:
+        typeof s.capacity === "number"
+          ? s.capacity
+          : Number.parseInt(String(s.capacity ?? ""), 10) || defaultCapacity,
+      recurrence: (s.recurrence as ScheduleRow["recurrence"]) ?? "weekly",
+      startDate: String(s.startDate || ""),
+      endDate: s.endDate ? String(s.endDate) : undefined,
+      daysOfWeek: Array.isArray(s.daysOfWeek) ? s.daysOfWeek : undefined,
+    }))
+    setValue("schedules", [...schedules, ...normalized], {
+      shouldDirty: true,
+      shouldValidate: true,
     })
   }
 
   const updateSchedule = (id: string, field: keyof ScheduleRow, value: any) => {
-    setSchedules((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    setValue(
+      "schedules",
+      schedules.map((s) => (s.id === id ? { ...s, [field]: value } : s)),
+      { shouldDirty: true },
     )
   }
 
   const removeSchedule = (id: string) => {
-    setSchedules((prev) => prev.filter((s) => s.id !== id))
-  }
-
-  const toggleDayOfWeek = (id: string, day: number) => {
-    setSchedules((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? {
-              ...s,
-              daysOfWeek: s.daysOfWeek?.includes(day)
-                ? s.daysOfWeek.filter((d) => d !== day)
-                : [...(s.daysOfWeek || []), day],
-            }
-          : s
-      )
+    setValue(
+      "schedules",
+      schedules.filter((s) => s.id !== id),
+      { shouldDirty: true, shouldValidate: true },
     )
   }
 
   const toggleLanguage = (lang: string) => {
-    setSelectedLanguages((prev) => (prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]))
+    const next = selectedLanguages.includes(lang)
+      ? selectedLanguages.filter((l) => l !== lang)
+      : [...selectedLanguages, lang]
+    setValue("languages", next, { shouldDirty: true, shouldValidate: true })
   }
 
   const toggleCategory = (cat: string) => {
-    setSelectedCategories((prev) => (prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]))
+    const next = selectedCategories.includes(cat)
+      ? selectedCategories.filter((c) => c !== cat)
+      : [...selectedCategories, cat]
+    setValue("categories", next, { shouldDirty: true, shouldValidate: true })
   }
 
   const steps = [
@@ -279,6 +417,7 @@ export default function NewTourPage() {
     if (!files) return
 
     setError(null)
+    setImagesError(null)
     setPhotoWarnings([])
     const remainingSlots = TOUR_IMAGE_POLICY.maxImagesPerTour - images.length
 
@@ -309,17 +448,9 @@ export default function NewTourPage() {
             )} max).`,
           )
         }
-
-        console.info("[v0] Tour image compression", {
-          file: stats.originalName,
-          originalBytes: stats.originalBytes,
-          compressedBytes: stats.compressedBytes,
-          width: stats.width,
-          height: stats.height,
-          quality: stats.quality,
-        })
       } catch (compressionError) {
-        const message = compressionError instanceof Error ? compressionError.message : "Image processing failed."
+        const message =
+          compressionError instanceof Error ? compressionError.message : "Image processing failed."
         warnings.push(`${file.name}: ${message}`)
       }
     }
@@ -339,20 +470,12 @@ export default function NewTourPage() {
     setImages(images.filter((_, i) => i !== index))
   }
 
-  const movePhoto = (fromIndex: number, toIndex: number) => {
-    const newImages = [...images]
-    const [moved] = newImages.splice(fromIndex, 1)
-    newImages.splice(toIndex, 0, moved)
-    setImages(newImages)
-  }
+  const getGoogleMapsUrl = (address: string) =>
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
 
-  // Google Maps link generator
-  const getGoogleMapsUrl = (address: string) => {
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
-  }
-
-  const seoKeywords = useMemo(() => normalizeSeoKeywords(formData.seoKeywords), [formData.seoKeywords])
-  const descriptionLength = String(formData.description || "").trim().length
+  // Derived publish-quality signals
+  const seoKeywords = useMemo(() => normalizeSeoKeywords(seoKeywordsRaw || ""), [seoKeywordsRaw])
+  const descriptionLength = String(description || "").trim().length
   const descriptionMinMet = descriptionLength >= TOUR_DESCRIPTION_MIN_CHARS
   const guideBioLength = String(profile?.bio || "").trim().length
   const guideBioMinMet = guideBioLength >= GUIDE_BIO_MIN_CHARS
@@ -360,70 +483,135 @@ export default function NewTourPage() {
   const stopMinMet = stopCount >= MIN_STOPS_FOR_PUBLISH
   const futureScheduleCount = countFutureSchedules(schedules)
   const futureScheduleMinMet = futureScheduleCount >= MIN_FUTURE_SCHEDULES_FOR_PUBLISH
-  const parsedMaxGroupSize = Number.parseInt(formData.maxGroupSize || "", 10)
-  const resolvedMaxGroupSize = Number.isFinite(parsedMaxGroupSize) && parsedMaxGroupSize > 0 ? parsedMaxGroupSize : 10
-  const parsedMinimumAttendees = Number.parseInt(formData.minimumAttendees || "", 10)
+  const parsedMaxGroupSize = Number.parseInt(maxGroupSize || "", 10)
+  const resolvedMaxGroupSize =
+    Number.isFinite(parsedMaxGroupSize) && parsedMaxGroupSize > 0 ? parsedMaxGroupSize : 10
+  const parsedMinimumAttendees = Number.parseInt(minimumAttendees || "", 10)
   const resolvedMinimumAttendees =
-    Number.isFinite(parsedMinimumAttendees) && parsedMinimumAttendees > 0 ? parsedMinimumAttendees : 1
+    Number.isFinite(parsedMinimumAttendees) && parsedMinimumAttendees > 0
+      ? parsedMinimumAttendees
+      : 1
   const minimumAttendeesValid = resolvedMinimumAttendees <= resolvedMaxGroupSize
 
-  // Validation
   const publishBlockers = useMemo(() => {
     const blockers: string[] = []
-    if (!formData.title.trim()) blockers.push("Title is required")
-    if (!formData.city.trim()) blockers.push("City is required")
-    if (!formData.description.trim()) blockers.push("Description is required")
+    if (!title.trim()) blockers.push("Title is required")
+    if (!city.trim()) blockers.push("City is required")
+    if (!description.trim()) blockers.push("Description is required")
     if (images.length < 1) blockers.push("At least 1 photo is required")
     if (schedules.length < 1) blockers.push("At least 1 schedule is required")
-    if (!formData.meetingPoint.trim()) blockers.push("Meeting point is required")
+    if (!meetingPoint.trim()) blockers.push("Meeting point is required")
     if (!descriptionMinMet) blockers.push(DESCRIPTION_MIN_MESSAGE)
     if (!guideBioMinMet) blockers.push(GUIDE_BIO_MIN_MESSAGE)
     if (!stopMinMet) blockers.push(MIN_STOPS_MESSAGE)
-    if (!futureScheduleMinMet) blockers.push(MIN_FUTURE_SCHEDULES_MESSAGE)
-    if (!minimumAttendeesValid) blockers.push("Minimum attendees cannot be greater than maximum group size")
+    if (!minimumAttendeesValid)
+      blockers.push("Minimum attendees cannot be greater than maximum group size")
     return blockers
   }, [
-    descriptionMinMet,
-    formData.city,
-    formData.description,
-    formData.meetingPoint,
-    formData.title,
-    futureScheduleMinMet,
-    guideBioMinMet,
+    title,
+    city,
+    description,
+    meetingPoint,
     images.length,
-    minimumAttendeesValid,
     schedules.length,
+    descriptionMinMet,
+    guideBioMinMet,
     stopMinMet,
+    minimumAttendeesValid,
   ])
 
   const blockersRef = useRef<HTMLDivElement>(null)
+
+  // Advance to next step only if current step passes validation.
+  const goToStep = async (target: number) => {
+    // Moving backwards is always allowed.
+    if (target < currentStep) {
+      setCurrentStep(target)
+      return
+    }
+
+    for (let step = currentStep; step < target; step += 1) {
+      const ok = await validateStep(step)
+      if (!ok) return
+    }
+    setCurrentStep(target)
+  }
+
+  const validateStep = async (step: number): Promise<boolean> => {
+    setError(null)
+    setImagesError(null)
+
+    const fields = stepFieldMap[step]
+    if (fields && fields.length > 0) {
+      const ok = await trigger(fields)
+      if (!ok) {
+        setError("Please fix the highlighted fields before continuing.")
+        return false
+      }
+    }
+
+    if (step === 2) {
+      const nonEmpty = getValues("highlights").filter((h) => h.trim().length > 0).length
+      if (nonEmpty < 1) {
+        setError("Add at least one highlight / stop before continuing.")
+        return false
+      }
+    }
+
+    if (step === 3) {
+      if (images.length < 1) {
+        setImagesError("Add at least one photo before continuing.")
+        return false
+      }
+    }
+
+    if (step === 4) {
+      const currentSchedules = getValues("schedules")
+      if (currentSchedules.length < 1) {
+        setError("Add at least one schedule before continuing.")
+        return false
+      }
+      const upcoming = countFutureSchedules(currentSchedules)
+      if (upcoming < MIN_FUTURE_SCHEDULES_FOR_PUBLISH) {
+        setError(MIN_FUTURE_SCHEDULES_MESSAGE)
+        return false
+      }
+    }
+
+    return true
+  }
 
   const handleSubmit = async (status: "draft" | "published") => {
     try {
       setError(null)
       setIsSubmitting(true)
 
-      if (!descriptionMinMet) {
-        setError(DESCRIPTION_MIN_MESSAGE)
-        return
-      }
-
-      if (!minimumAttendeesValid) {
-        setError(`Minimum attendees cannot be greater than maximum group size (${resolvedMaxGroupSize})`)
-        return
-      }
+      const values = getValues()
 
       if (status === "published") {
+        const zodValid = await trigger()
+        if (!zodValid) {
+          setError("Please fix the highlighted fields before publishing.")
+          return
+        }
         if (publishBlockers.length > 0) {
           setError("Complete all required fields before publishing.")
           blockersRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
           return
         }
+      } else if (!values.title.trim()) {
+        // Drafts need a title at minimum so we have something to save.
+        const ok = await trigger(["title"])
+        if (!ok) {
+          setError("Add a title before saving the draft.")
+          setCurrentStep(1)
+          return
+        }
       }
 
-      const safeHighlights = highlights.filter((h) => h.trim())
-      const safeDuration = formData.duration ? parseFloat(formData.duration) * 60 : 90
-      const safeMaxCapacity = formData.maxGroupSize ? parseInt(formData.maxGroupSize) : 10
+      const safeHighlights = values.highlights.filter((h) => h.trim())
+      const safeDuration = values.duration ? parseFloat(values.duration) * 60 : 90
+      const safeMaxCapacity = values.maxGroupSize ? parseInt(values.maxGroupSize, 10) : 10
       const safeMinimumAttendees = resolvedMinimumAttendees
 
       // Step 1: Create tour WITHOUT images (metadata only)
@@ -431,22 +619,22 @@ export default function NewTourPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: formData.title,
-          city: formData.city,
-          description: formData.description,
+          title: values.title,
+          city: values.city,
+          description: values.description,
           highlights: safeHighlights,
           duration_minutes: safeDuration,
           max_capacity: safeMaxCapacity,
           minimum_attendees: safeMinimumAttendees,
-          languages: selectedLanguages.length > 0 ? selectedLanguages : ["English"],
-          categories: selectedCategories,
-          meeting_point: formData.meetingPoint,
-          meeting_point_details: formData.meetingPointDetails,
-          what_to_expect: formData.whatToExpect,
-          what_to_bring: formData.whatToBring,
-          accessibility_info: formData.accessibility_info,
+          languages: values.languages.length > 0 ? values.languages : ["English"],
+          categories: values.categories,
+          meeting_point: values.meetingPoint,
+          meeting_point_details: values.meetingPointDetails,
+          what_to_expect: values.whatToExpect,
+          what_to_bring: values.whatToBring,
+          accessibility_info: values.accessibility_info,
           seo_keywords: seoKeywords,
-          status: "draft", // Always create as draft first
+          status: "draft",
         }),
       })
 
@@ -471,61 +659,44 @@ export default function NewTourPage() {
       if (images.length > 0) {
         for (let i = 0; i < images.length; i++) {
           const image = images[i]
-          
-          // Skip if no file (shouldn't happen, but safety check)
-          if (!image.file) {
-            console.warn("[v0] Image missing file at index", i)
-            continue
-          }
-
+          if (!image.file) continue
           try {
             const imageFormData = new FormData()
             imageFormData.append("file", image.file)
-
             const uploadResponse = await fetch(`/api/tours/${newTour.id}/upload-image`, {
               method: "POST",
               body: imageFormData,
             })
-
             if (!uploadResponse.ok) {
-              const uploadError = await uploadResponse.json().catch(() => ({ error: "Upload failed" }))
-              console.error(`[v0] Failed to upload image ${i + 1}:`, uploadError)
+              const uploadError = await uploadResponse
+                .json()
+                .catch(() => ({ error: "Upload failed" }))
               imageUploadErrors.push(
                 `${image.file?.name || `Image ${i + 1}`}: ${uploadError.error || "Upload failed"}`,
               )
-              // Continue to next image instead of failing completely
               continue
             }
-
             imagesUploadedCount++
           } catch (imageErr) {
             console.error(`[v0] Error uploading image ${i + 1}:`, imageErr)
-            imageUploadErrors.push(`${image.file?.name || `Image ${i + 1}`}: unexpected upload error`)
-            // Continue to next image
+            imageUploadErrors.push(
+              `${image.file?.name || `Image ${i + 1}`}: unexpected upload error`,
+            )
             continue
           }
         }
-
-        // Warn if some images failed
-        if (imagesUploadedCount < images.length) {
-          console.warn(`[v0] Only ${imagesUploadedCount}/${images.length} images uploaded successfully`)
-        }
-        if (imageUploadErrors.length > 0) {
-          console.warn("[v0] Image upload errors:", imageUploadErrors)
-        }
       }
 
-      // Step 3: Create schedules in bulk and verify count
+      // Step 3: Create schedules in bulk
       let schedulesCreatedCount = 0
-      if (schedules.length > 0) {
-        const schedulesToCreate = schedules
-          .filter(s => s.startDate && s.time)
-          .map(schedule => ({
+      if (values.schedules.length > 0) {
+        const schedulesToCreate = values.schedules
+          .filter((s) => s.startDate && s.time)
+          .map((schedule) => ({
             start_time: new Date(`${schedule.startDate}T${schedule.time}`).toISOString(),
             capacity: schedule.capacity,
             language: schedule.language,
           }))
-
         if (schedulesToCreate.length > 0) {
           const scheduleResponse = await fetch("/api/schedules", {
             method: "POST",
@@ -535,20 +706,11 @@ export default function NewTourPage() {
               schedules: schedulesToCreate,
             }),
           })
-
-          const scheduleContentType = scheduleResponse.headers.get("content-type")
           if (!scheduleResponse.ok) {
-            let scheduleError
-            if (scheduleContentType?.includes("application/json")) {
-              scheduleError = await scheduleResponse.json()
-            } else {
-              const text = await scheduleResponse.text()
-              console.error("[v0] Schedule API returned non-JSON:", text)
-              scheduleError = { error: `Schedule creation failed: ${scheduleResponse.status}` }
-            }
+            const scheduleError = await scheduleResponse
+              .json()
+              .catch(() => ({ error: "Schedule creation failed" }))
             console.error("[v0] Failed to create schedules:", scheduleError)
-
-            // If publishing and schedules failed, block and show error
             if (status === "published") {
               setError(`Failed to create schedules: ${scheduleError.error || "Unknown error"}`)
               return
@@ -560,30 +722,28 @@ export default function NewTourPage() {
         }
       }
 
-      // Step 4: If publishing, verify photo count and schedule count before publishing
+      // Step 4: If publishing, verify counts and publish
       if (status === "published") {
         if (imagesUploadedCount === 0) {
           setError("Cannot publish: at least 1 photo is required")
           return
         }
-        
         if (schedulesCreatedCount === 0) {
           setError("Cannot publish: at least 1 schedule is required")
           return
         }
-
         const publishResponse = await fetch("/api/tours/publish", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ tour_id: newTour.id }),
         })
-
         if (!publishResponse.ok) {
-          const publishError = await publishResponse.json().catch(() => ({ error: "Publishing failed" }))
+          const publishError = await publishResponse
+            .json()
+            .catch(() => ({ error: "Publishing failed" }))
           setError(publishError.error || "Failed to publish tour")
           return
         }
-
       }
 
       router.push("/dashboard/tours")
@@ -594,11 +754,6 @@ export default function NewTourPage() {
     } finally {
       setIsSubmitting(false)
     }
-  }
-
-  // Clear saved form after successful submission
-  const clearSavedForm = () => {
-    localStorage.removeItem("tour_creation_form")
   }
 
   return (
@@ -615,12 +770,14 @@ export default function NewTourPage() {
               </Link>
               <div className="min-w-0">
                 <h1 className="text-base sm:text-xl font-bold truncate">Create New Tour</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Fill in the details to publish your tour</p>
+                <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
+                  Fill in the details to publish your tour
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="gap-1 sm:gap-2 bg-transparent w-full sm:w-auto"
                 onClick={() => handleSubmit("draft")}
@@ -629,17 +786,17 @@ export default function NewTourPage() {
                 <Save className="h-4 w-4" />
                 <span className="hidden sm:inline">Save Draft</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="gap-1 sm:gap-2 bg-transparent w-full sm:w-auto"
-                onClick={() => setCurrentStep(6)}
+                onClick={() => goToStep(6)}
               >
                 <Eye className="h-4 w-4" />
                 <span className="hidden md:inline">Preview</span>
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 className="gap-1 sm:gap-2 bg-transparent text-destructive hover:text-destructive hidden md:flex w-full sm:w-auto"
                 onClick={clearDraft}
@@ -652,7 +809,7 @@ export default function NewTourPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
+      <div className="max-w-5xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -664,87 +821,82 @@ export default function NewTourPage() {
           <Alert className="mb-6 bg-primary/10 border-primary/30">
             <AlertCircle className="h-4 w-4 text-primary" />
             <AlertDescription className="text-primary ml-2">
-              <strong>Free plan:</strong> 1 tour maximum + up to 7 guests per tour. <Link href="/dashboard/upgrade" className="underline font-medium">Upgrade to Pro</Link> for unlimited tours and larger groups.
+              <strong>Free plan:</strong> 1 published tour (drafts unlimited) + up to 7 guests per tour.{" "}
+              <Link href="/dashboard/upgrade" className="underline font-medium">
+                Upgrade to Pro
+              </Link>{" "}
+              for unlimited tours and larger groups.
             </AlertDescription>
           </Alert>
         )}
-        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8 min-w-0">
-          {/* Progress Sidebar */}
-          <div className="lg:col-span-1">
-            {/* Mobile: Horizontal scroll */}
-            <div className="lg:hidden overflow-x-auto pb-2 -mx-4 px-4">
-              <div className="flex gap-2 min-w-max">
-                {steps.map((step) => (
+
+        {/* Horizontal stepper */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-start gap-0.5 sm:gap-2">
+            {steps.map((step, i) => {
+              const isActive = currentStep === step.number
+              const isCompleted = currentStep > step.number
+              const isLast = i === steps.length - 1
+              return (
+                <div
+                  key={step.number}
+                  className={`flex items-start gap-0.5 sm:gap-2 ${!isLast ? "flex-1" : ""}`}
+                >
                   <button
-                    key={step.number}
-                    onClick={() => setCurrentStep(step.number)}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors whitespace-nowrap ${
-                      currentStep === step.number
-                        ? "bg-primary/10 border border-primary"
-                        : currentStep > step.number
-                          ? "bg-secondary/10 border border-secondary/30"
-                          : "bg-muted"
-                    }`}
+                    type="button"
+                    onClick={() => goToStep(step.number)}
+                    className="group flex flex-col items-center gap-1.5 sm:gap-2 shrink-0"
                   >
                     <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium shrink-0 ${
-                        currentStep === step.number
-                          ? "bg-primary text-primary-foreground"
-                          : currentStep > step.number
-                            ? "bg-secondary text-white"
-                            : "bg-background text-muted-foreground"
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-sm font-medium transition-colors border-2 shrink-0 ${
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                          : isCompleted
+                            ? "bg-secondary text-white border-secondary"
+                            : "bg-background text-muted-foreground border-border group-hover:border-muted-foreground/50"
                       }`}
                     >
-                      {currentStep > step.number ? <CheckCircle2 className="h-4 w-4" /> : step.number}
+                      {isCompleted ? (
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                      ) : (
+                        step.number
+                      )}
                     </div>
-                    <span className="text-sm font-medium">{step.title}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            {/* Desktop: Vertical sidebar */}
-            <Card className="hidden lg:block sticky top-24 max-h-[calc(100vh-140px)] overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg">Progress</CardTitle>
-              </CardHeader>
-              <CardContent className="overflow-y-auto">
-                <div className="space-y-3 pr-1">
-                  {steps.map((step) => (
-                    <button
-                      key={step.number}
-                      onClick={() => setCurrentStep(step.number)}
-                      className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left ${
-                        currentStep === step.number
-                          ? "bg-primary/10 border border-primary"
-                          : currentStep > step.number
-                            ? "bg-secondary/10 border border-secondary/30"
-                            : "hover:bg-muted"
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
-                          currentStep === step.number
-                            ? "bg-primary text-primary-foreground"
-                            : currentStep > step.number
-                              ? "bg-secondary text-white"
-                              : "bg-muted text-muted-foreground"
+                    <div className="hidden sm:flex sm:flex-col sm:items-center text-center min-w-[72px]">
+                      <span
+                        className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                          isActive ? "text-foreground" : "text-muted-foreground"
                         }`}
                       >
-                        {currentStep > step.number ? <CheckCircle2 className="h-5 w-5" /> : step.number}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{step.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{step.description}</p>
-                      </div>
-                    </button>
-                  ))}
+                        {step.title}
+                      </span>
+                      <span className="text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                        {step.description}
+                      </span>
+                    </div>
+                  </button>
+                  {!isLast && (
+                    <div
+                      className={`h-0.5 flex-1 mt-4 sm:mt-5 transition-colors ${
+                        isCompleted ? "bg-secondary" : "bg-border"
+                      }`}
+                    />
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+              )
+            })}
           </div>
+          {/* Mobile-only label for active step */}
+          <div className="mt-3 text-center sm:hidden">
+            <p className="text-sm font-medium">{steps[currentStep - 1]?.title}</p>
+            <p className="text-xs text-muted-foreground">
+              {steps[currentStep - 1]?.description}
+            </p>
+          </div>
+        </div>
 
-          {/* Main Form */}
-          <div className="lg:col-span-3">
+        {/* Main Form */}
+        <div>
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
               <Card>
@@ -758,74 +910,104 @@ export default function NewTourPage() {
                     <Input
                       id="title"
                       placeholder="e.g., Historic Old Town Walking Tour"
-                      value={formData.title}
-                      onChange={(e) => handleInputChange("title", e.target.value)}
+                      aria-invalid={!!errors.title}
+                      {...register("title")}
                     />
-                    <p className="text-xs text-muted-foreground">Choose a catchy title that describes your tour</p>
+                    <FieldError message={errors.title?.message} />
+                    <p className="text-xs text-muted-foreground">
+                      Choose a catchy title that describes your tour
+                    </p>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="city">City *</Label>
-                    <Select onValueChange={(value) => handleInputChange("city", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={availableCities.length === 0 ? "Loading cities…" : "Select a city"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableCities.map((c) => (
-                          <SelectItem key={c.slug} value={c.slug}>
-                            {c.name}, {c.country}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Controller
+                      name="city"
+                      control={control}
+                      render={({ field }) => (
+                        <Select value={field.value || undefined} onValueChange={field.onChange}>
+                          <SelectTrigger aria-invalid={!!errors.city}>
+                            <SelectValue
+                              placeholder={
+                                availableCities.length === 0 ? "Loading cities…" : "Select a city"
+                              }
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {availableCities.map((c) => (
+                              <SelectItem key={c.slug} value={c.slug}>
+                                {c.name}, {c.country}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    <FieldError message={errors.city?.message} />
                   </div>
 
                   <div className="grid sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="duration">Duration *</Label>
-                      <Select onValueChange={(value) => handleInputChange("duration", value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1 hour</SelectItem>
-                          <SelectItem value="1.5">1.5 hours</SelectItem>
-                          <SelectItem value="2">2 hours</SelectItem>
-                          <SelectItem value="2.5">2.5 hours</SelectItem>
-                          <SelectItem value="3">3 hours</SelectItem>
-                          <SelectItem value="3.5">3.5 hours</SelectItem>
-                          <SelectItem value="4">4 hours</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Controller
+                        name="duration"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value || undefined} onValueChange={field.onChange}>
+                            <SelectTrigger aria-invalid={!!errors.duration}>
+                              <SelectValue placeholder="Select duration" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 hour</SelectItem>
+                              <SelectItem value="1.5">1.5 hours</SelectItem>
+                              <SelectItem value="2">2 hours</SelectItem>
+                              <SelectItem value="2.5">2.5 hours</SelectItem>
+                              <SelectItem value="3">3 hours</SelectItem>
+                              <SelectItem value="3.5">3.5 hours</SelectItem>
+                              <SelectItem value="4">4 hours</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                      <FieldError message={errors.duration?.message} />
                     </div>
 
                     <div className="space-y-2">
-                    <Label htmlFor="maxGroupSize">Maximum Group Size *</Label>
-                    <Select onValueChange={(value) => handleInputChange("maxGroupSize", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select group size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="4">4 people</SelectItem>
-                        <SelectItem value="5">5 people</SelectItem>
-                        <SelectItem value="6">6 people</SelectItem>
-                        <SelectItem value="7">7 people</SelectItem>
-                        {canUseLargeGroups && (
-                          <>
-                            <SelectItem value="8">8 people</SelectItem>
-                            <SelectItem value="10">10 people</SelectItem>
-                            <SelectItem value="15">15 people</SelectItem>
-                            <SelectItem value="20">20 people</SelectItem>
-                            <SelectItem value="25">25 people</SelectItem>
-                            <SelectItem value="30">30 people</SelectItem>
-                            <SelectItem value="50">50 people</SelectItem>
-                          </>
+                      <Label htmlFor="maxGroupSize">Maximum Group Size *</Label>
+                      <Controller
+                        name="maxGroupSize"
+                        control={control}
+                        render={({ field }) => (
+                          <Select value={field.value || undefined} onValueChange={field.onChange}>
+                            <SelectTrigger aria-invalid={!!errors.maxGroupSize}>
+                              <SelectValue placeholder="Select group size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="4">4 people</SelectItem>
+                              <SelectItem value="5">5 people</SelectItem>
+                              <SelectItem value="6">6 people</SelectItem>
+                              <SelectItem value="7">7 people</SelectItem>
+                              {canUseLargeGroups && (
+                                <>
+                                  <SelectItem value="8">8 people</SelectItem>
+                                  <SelectItem value="10">10 people</SelectItem>
+                                  <SelectItem value="15">15 people</SelectItem>
+                                  <SelectItem value="20">20 people</SelectItem>
+                                  <SelectItem value="25">25 people</SelectItem>
+                                  <SelectItem value="30">30 people</SelectItem>
+                                  <SelectItem value="50">50 people</SelectItem>
+                                </>
+                              )}
+                            </SelectContent>
+                          </Select>
                         )}
-                      </SelectContent>
-                    </Select>
-                    {!planLoading && isFreePlan && (
-                      <p className="text-xs text-muted-foreground">Free plan limited to 7 guests</p>
-                    )}
+                      />
+                      <FieldError message={errors.maxGroupSize?.message} />
+                      {!planLoading && isFreePlan && (
+                        <p className="text-xs text-muted-foreground">
+                          Free plan limited to 7 guests
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -835,10 +1017,13 @@ export default function NewTourPage() {
                         type="number"
                         min="1"
                         max={String(Math.max(1, resolvedMaxGroupSize))}
-                        value={formData.minimumAttendees}
-                        onChange={(event) => handleInputChange("minimumAttendees", event.target.value)}
+                        aria-invalid={!!errors.minimumAttendees}
+                        {...register("minimumAttendees")}
                       />
-                      <p className="text-xs text-muted-foreground">Shown publicly to guests before booking.</p>
+                      <FieldError message={errors.minimumAttendees?.message} />
+                      <p className="text-xs text-muted-foreground">
+                        Shown publicly to guests before booking.
+                      </p>
                     </div>
                   </div>
 
@@ -856,6 +1041,7 @@ export default function NewTourPage() {
                         </Badge>
                       ))}
                     </div>
+                    <FieldError message={errors.languages?.message as string | undefined} />
                   </div>
 
                   <div className="space-y-2">
@@ -872,10 +1058,13 @@ export default function NewTourPage() {
                         </Badge>
                       ))}
                     </div>
+                    <FieldError message={errors.categories?.message as string | undefined} />
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-end gap-2">
-                    <Button onClick={() => setCurrentStep(2)} className="w-full sm:w-auto">Continue to Description</Button>
+                    <Button onClick={() => goToStep(2)} className="w-full sm:w-auto">
+                      Continue to Description
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -886,7 +1075,9 @@ export default function NewTourPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Tour Description</CardTitle>
-                  <CardDescription>Help travelers understand what makes your tour special</CardDescription>
+                  <CardDescription>
+                    Help travelers understand what makes your tour special
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
@@ -895,12 +1086,13 @@ export default function NewTourPage() {
                       id="description"
                       placeholder="Describe your tour in detail. What will travelers see and experience?"
                       className="min-h-[150px]"
-                      value={formData.description}
-                      onChange={(e) => handleInputChange("description", e.target.value)}
+                      aria-invalid={!!errors.description}
+                      {...register("description")}
                     />
                     <p
                       className={`text-xs ${descriptionMinMet ? "text-green-600" : "text-muted-foreground"}`}
                     >{`${descriptionLength}/${TOUR_DESCRIPTION_MIN_CHARS} characters`}</p>
+                    <FieldError message={errors.description?.message} />
                   </div>
 
                   <div className="space-y-2">
@@ -908,8 +1100,7 @@ export default function NewTourPage() {
                     <Input
                       id="seoKeywords"
                       placeholder="e.g., paris walking tour, hidden gems paris, local guide paris"
-                      value={formData.seoKeywords}
-                      onChange={(e) => handleInputChange("seoKeywords", e.target.value)}
+                      {...register("seoKeywords")}
                     />
                     <p className="text-xs text-muted-foreground">
                       Comma-separated keywords. Focus on specific traveler intent and city phrases.
@@ -938,9 +1129,16 @@ export default function NewTourPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div>
                         <Label>Highlights / Stops (what you will see) *</Label>
-                        <p className="text-xs text-muted-foreground mt-1">List the key attractions, landmarks, or experiences on your tour</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          List the key attractions, landmarks, or experiences on your tour
+                        </p>
                       </div>
-                      <Button variant="outline" size="sm" onClick={addHighlight} className="gap-1 bg-transparent w-full sm:w-auto">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addHighlight}
+                        className="gap-1 bg-transparent w-full sm:w-auto"
+                      >
                         <Plus className="h-4 w-4" />
                         Add Stop
                       </Button>
@@ -948,7 +1146,13 @@ export default function NewTourPage() {
                     {highlights.map((highlight, index) => (
                       <div key={index} className="flex gap-2">
                         <Input
-                          placeholder={index === 0 ? "e.g., The historic cathedral with stunning Gothic architecture" : index === 1 ? "e.g., Local artisan market with handmade crafts" : `Stop ${index + 1}`}
+                          placeholder={
+                            index === 0
+                              ? "e.g., The historic cathedral with stunning Gothic architecture"
+                              : index === 1
+                                ? "e.g., Local artisan market with handmade crafts"
+                                : `Stop ${index + 1}`
+                          }
                           value={highlight}
                           onChange={(e) => updateHighlight(index, e.target.value)}
                         />
@@ -969,20 +1173,22 @@ export default function NewTourPage() {
                       id="whatToExpect"
                       placeholder="What should travelers expect during the tour?"
                       className="min-h-[100px]"
-                      value={formData.whatToExpect}
-                      onChange={(e) => handleInputChange("whatToExpect", e.target.value)}
+                      {...register("whatToExpect")}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="whatToBring">Guide recommendations (what to bring / wear)</Label>
+                    <Label htmlFor="whatToBring">
+                      Guide recommendations (what to bring / wear)
+                    </Label>
                     <Textarea
                       id="whatToBring"
                       placeholder="e.g., Comfortable walking shoes, water bottle, camera, sun protection, umbrella for rain"
-                      value={formData.whatToBring}
-                      onChange={(e) => handleInputChange("whatToBring", e.target.value)}
+                      {...register("whatToBring")}
                     />
-                    <p className="text-xs text-muted-foreground">Help guests prepare for the tour experience</p>
+                    <p className="text-xs text-muted-foreground">
+                      Help guests prepare for the tour experience
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -990,16 +1196,21 @@ export default function NewTourPage() {
                     <Textarea
                       id="accessibility_info"
                       placeholder="Is this tour wheelchair accessible? Are there many stairs?"
-                      value={formData.accessibility_info}
-                      onChange={(e) => handleInputChange("accessibility_info", e.target.value)}
+                      {...register("accessibility_info")}
                     />
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep(1)} className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep(1)}
+                      className="w-full sm:w-auto"
+                    >
                       Back
                     </Button>
-                    <Button onClick={() => setCurrentStep(3)} className="w-full sm:w-auto">Continue to Photos</Button>
+                    <Button onClick={() => goToStep(3)} className="w-full sm:w-auto">
+                      Continue to Photos
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1030,18 +1241,25 @@ export default function NewTourPage() {
                           disabled={images.length >= TOUR_IMAGE_POLICY.maxImagesPerTour}
                         />
                         <p className="text-xs text-muted-foreground mt-4">
-                          JPG, PNG or WebP. Max {TOUR_IMAGE_POLICY.maxImagesPerTour - images.length} photos remaining.
-                          Recommended: {TOUR_IMAGE_POLICY.minRecommendedWidth}x{TOUR_IMAGE_POLICY.minRecommendedHeight}px.
+                          JPG, PNG or WebP. Max {TOUR_IMAGE_POLICY.maxImagesPerTour - images.length}{" "}
+                          photos remaining. Recommended:{" "}
+                          {TOUR_IMAGE_POLICY.minRecommendedWidth}x
+                          {TOUR_IMAGE_POLICY.minRecommendedHeight}px.
                         </p>
                       </div>
                     </label>
                   </div>
+                  {imagesError && <FieldError message={imagesError} />}
 
                   <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
                     <p className="font-medium text-foreground">Image quality checklist</p>
-                    <p className="mt-1">Images are auto-compressed to WebP (longest side {TOUR_IMAGE_POLICY.maxDimensionPx}px).</p>
                     <p className="mt-1">
-                      Target size per image: {formatBytes(TOUR_IMAGE_POLICY.targetBytesMin)} - {formatBytes(TOUR_IMAGE_POLICY.targetBytesMax)}.
+                      Images are auto-compressed to WebP (longest side{" "}
+                      {TOUR_IMAGE_POLICY.maxDimensionPx}px).
+                    </p>
+                    <p className="mt-1">
+                      Target size per image: {formatBytes(TOUR_IMAGE_POLICY.targetBytesMin)} -{" "}
+                      {formatBytes(TOUR_IMAGE_POLICY.targetBytesMax)}.
                     </p>
                     {compressionMedianBytes && (
                       <p className="mt-1">
@@ -1055,7 +1273,9 @@ export default function NewTourPage() {
                       <AlertCircle className="h-4 w-4" />
                       <AlertDescription>
                         {photoWarnings[0]}
-                        {photoWarnings.length > 1 ? ` (+${photoWarnings.length - 1} more warning${photoWarnings.length > 2 ? "s" : ""})` : ""}
+                        {photoWarnings.length > 1
+                          ? ` (+${photoWarnings.length - 1} more warning${photoWarnings.length > 2 ? "s" : ""})`
+                          : ""}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -1090,10 +1310,18 @@ export default function NewTourPage() {
                   )}
 
                   <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep(2)} className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep(2)}
+                      className="w-full sm:w-auto"
+                    >
                       Back
                     </Button>
-                    <Button onClick={() => setCurrentStep(4)} disabled={images.length === 0} className="w-full sm:w-auto">
+                    <Button
+                      onClick={() => goToStep(4)}
+                      disabled={images.length === 0}
+                      className="w-full sm:w-auto"
+                    >
                       Continue to Schedules
                     </Button>
                   </div>
@@ -1113,38 +1341,73 @@ export default function NewTourPage() {
                     <Alert className="bg-primary/10 border-primary/30">
                       <AlertCircle className="h-4 w-4 text-primary" />
                       <AlertDescription className="text-primary ml-2">
-                        Free plan: max capacity is 7 guests per tour. Upgrade to Pro to increase group sizes.
+                        Free plan: max capacity is 7 guests per tour. Upgrade to Pro to increase
+                        group sizes.
                       </AlertDescription>
                     </Alert>
                   )}
 
+                  <Alert
+                    className={
+                      futureScheduleMinMet
+                        ? "border-green-200 bg-green-50"
+                        : "border-amber-500/40 bg-amber-50"
+                    }
+                  >
+                    {futureScheduleMinMet ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                    )}
+                    <AlertDescription
+                      className={futureScheduleMinMet ? "text-green-700" : "text-amber-900"}
+                    >
+                      Upcoming dates: {futureScheduleCount}/{MIN_FUTURE_SCHEDULES_FOR_PUBLISH}.{" "}
+                      {futureScheduleMinMet
+                        ? "You have enough upcoming dates to publish."
+                        : MIN_FUTURE_SCHEDULES_MESSAGE}
+                    </AlertDescription>
+                  </Alert>
+
                   <Tabs defaultValue={selectedLanguages[0] || "English"}>
                     <TabsList
                       className="w-full gap-1 overflow-x-auto flex"
-                      style={{ gridTemplateColumns: `repeat(${Math.min((selectedLanguages.length > 0 ? selectedLanguages : ["English"]).length, 6)}, minmax(0, 1fr))` }}
+                      style={{
+                        gridTemplateColumns: `repeat(${Math.min((selectedLanguages.length > 0 ? selectedLanguages : ["English"]).length, 6)}, minmax(0, 1fr))`,
+                      }}
                     >
-                      {(selectedLanguages.length > 0 ? selectedLanguages : ["English"]).map((lang) => (
-                        <TabsTrigger key={lang} value={lang} className="text-xs sm:text-sm truncate flex-shrink-0">
-                          {lang}
-                        </TabsTrigger>
-                      ))}
+                      {(selectedLanguages.length > 0 ? selectedLanguages : ["English"]).map(
+                        (lang) => (
+                          <TabsTrigger
+                            key={lang}
+                            value={lang}
+                            className="text-xs sm:text-sm truncate flex-shrink-0"
+                          >
+                            {lang}
+                          </TabsTrigger>
+                        ),
+                      )}
                     </TabsList>
 
                     {(selectedLanguages.length > 0 ? selectedLanguages : ["English"]).map((lang) => (
                       <TabsContent key={lang} value={lang} className="space-y-4 mt-6">
                         <div className="mb-8 border rounded-xl shadow-sm bg-card overflow-hidden">
                           <div className="bg-primary/5 px-4 py-3 border-b flex items-center gap-2">
-                             <Clock className="w-4 h-4 text-primary" />
-                             <span className="font-semibold text-sm">Generate repeating schedules for {lang}</span>
+                            <Clock className="w-4 h-4 text-primary" />
+                            <span className="font-semibold text-sm">
+                              Generate repeating schedules for {lang}
+                            </span>
                           </div>
                           <div className="p-4">
                             <RecurringScheduleBuilder
                               tourLanguages={[lang]}
                               onGenerate={(newSchedules) => {
-                                 const overrides = newSchedules.map(s => ({...s, language: lang}))
-                                 handleRecurringSchedules(overrides)
+                                const overrides = newSchedules.map((s) => ({ ...s, language: lang }))
+                                handleRecurringSchedules(overrides)
                               }}
-                              existingSchedules={schedules.filter(s => s.language === lang)}
+                              existingSchedules={schedules.filter((s) => s.language === lang)}
+                              defaultCapacity={defaultCapacity}
+                              maxCapacity={isFreePlan ? 7 : 50}
                             />
                           </div>
                         </div>
@@ -1165,51 +1428,83 @@ export default function NewTourPage() {
 
                           <div className="space-y-3">
                             {schedules
-                              .filter((s) => s.language === lang)
-                              .map((schedule) => (
-                                <div key={schedule.id} className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-end p-3 sm:p-0 border sm:border-0 rounded-lg sm:rounded-none">
-                                  <div className="flex-1">
-                                    <Label className="text-xs">Date</Label>
-                                    <Input
-                                      type="date"
-                                      value={schedule.startDate}
-                                      onChange={(e) => updateSchedule(schedule.id, "startDate", e.target.value)}
-                                    />
-                                  </div>
-                                  <div className="flex-1">
-                                    <Label className="text-xs">Time</Label>
-                                    <Input
-                                      type="time"
-                                      value={schedule.time}
-                                      onChange={(e) => updateSchedule(schedule.id, "time", e.target.value)}
-                                    />
-                                  </div>
-                                  <div className="flex gap-2">
+                              .map((schedule, index) => ({ schedule, index }))
+                              .filter(({ schedule }) => schedule.language === lang)
+                              .map(({ schedule, index }) => {
+                                const rowError = (
+                                  errors.schedules as
+                                    | Record<number, Record<string, { message?: string }>>
+                                    | undefined
+                                )?.[index]
+                                const dateError = rowError?.startDate?.message
+                                const timeError = rowError?.time?.message
+                                const capacityError = rowError?.capacity?.message
+                                return (
+                                  <div
+                                    key={schedule.id}
+                                    className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-start p-3 sm:p-0 border sm:border-0 rounded-lg sm:rounded-none"
+                                  >
                                     <div className="flex-1">
-                                      <Label className="text-xs">Capacity</Label>
+                                      <Label className="text-xs">Date</Label>
                                       <Input
-                                        type="number"
-                                        min="1"
-                                        max="100"
-                                        value={schedule.capacity}
-                                        onChange={(e) => updateSchedule(schedule.id, "capacity", Number(e.target.value))}
+                                        type="date"
+                                        value={schedule.startDate}
+                                        aria-invalid={!!dateError}
+                                        onChange={(e) =>
+                                          updateSchedule(schedule.id, "startDate", e.target.value)
+                                        }
                                       />
+                                      <FieldError message={dateError} />
                                     </div>
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      onClick={() => removeSchedule(schedule.id)}
-                                      className="mt-5"
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    <div className="flex-1">
+                                      <Label className="text-xs">Time</Label>
+                                      <Input
+                                        type="time"
+                                        value={schedule.time}
+                                        aria-invalid={!!timeError}
+                                        onChange={(e) =>
+                                          updateSchedule(schedule.id, "time", e.target.value)
+                                        }
+                                      />
+                                      <FieldError message={timeError} />
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <div className="flex-1">
+                                        <Label className="text-xs">Capacity</Label>
+                                        <Input
+                                          type="number"
+                                          min="1"
+                                          max="100"
+                                          value={schedule.capacity}
+                                          aria-invalid={!!capacityError}
+                                          onChange={(e) =>
+                                            updateSchedule(
+                                              schedule.id,
+                                              "capacity",
+                                              Number(e.target.value),
+                                            )
+                                          }
+                                        />
+                                        <FieldError message={capacityError} />
+                                      </div>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        onClick={() => removeSchedule(schedule.id)}
+                                        className="mt-5"
+                                      >
+                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                )
+                              })}
                           </div>
 
                           {schedules.filter((s) => s.language === lang).length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">No times added yet</p>
+                            <p className="text-sm text-muted-foreground text-center py-4">
+                              No times added yet
+                            </p>
                           )}
                         </div>
                       </TabsContent>
@@ -1229,10 +1524,18 @@ export default function NewTourPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep(3)} className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep(3)}
+                      className="w-full sm:w-auto"
+                    >
                       Back
                     </Button>
-                    <Button onClick={() => setCurrentStep(5)} disabled={schedules.length === 0} className="w-full sm:w-auto">
+                    <Button
+                      onClick={() => goToStep(5)}
+                      disabled={schedules.length === 0}
+                      className="w-full sm:w-auto"
+                    >
                       Continue to Meeting Point
                     </Button>
                   </div>
@@ -1250,20 +1553,29 @@ export default function NewTourPage() {
                 <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="meetingPoint">Meeting Point Address *</Label>
-                    <PlacesAutocompleteInput
-                      id="meetingPoint"
-                      value={formData.meetingPoint}
-                      onChange={(value) => handleInputChange("meetingPoint", value)}
-                      placeholder="e.g., In front of Notre-Dame Cathedral"
+                    <Controller
+                      name="meetingPoint"
+                      control={control}
+                      render={({ field }) => (
+                        <PlacesAutocompleteInput
+                          id="meetingPoint"
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder="e.g., In front of Notre-Dame Cathedral"
+                        />
+                      )}
                     />
-                    <p className="text-xs text-muted-foreground">Start typing to search for a location</p>
+                    <FieldError message={errors.meetingPoint?.message} />
+                    <p className="text-xs text-muted-foreground">
+                      Start typing to search for a location
+                    </p>
                   </div>
 
-                  {formData.meetingPoint && (
+                  {meetingPoint && (
                     <>
-                      <GoogleMapEmbed address={formData.meetingPoint} height={260} />
+                      <GoogleMapEmbed address={meetingPoint} height={260} />
                       <a
-                        href={getGoogleMapsUrl(formData.meetingPoint)}
+                        href={getGoogleMapsUrl(meetingPoint)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block"
@@ -1282,8 +1594,7 @@ export default function NewTourPage() {
                       id="meetingPointDetails"
                       placeholder="How can travelers find you? What will you be wearing or holding?"
                       className="min-h-[100px]"
-                      value={formData.meetingPointDetails}
-                      onChange={(e) => handleInputChange("meetingPointDetails", e.target.value)}
+                      {...register("meetingPointDetails")}
                     />
                   </div>
 
@@ -1301,10 +1612,16 @@ export default function NewTourPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep(4)} className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep(4)}
+                      className="w-full sm:w-auto"
+                    >
                       Back
                     </Button>
-                    <Button onClick={() => setCurrentStep(6)} className="w-full sm:w-auto">Continue to Preview</Button>
+                    <Button onClick={() => goToStep(6)} className="w-full sm:w-auto">
+                      Continue to Preview
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1324,19 +1641,19 @@ export default function NewTourPage() {
                       <div className="space-y-3 text-sm">
                         <div>
                           <p className="text-muted-foreground">Title</p>
-                          <p className="font-medium">{formData.title || "(Not set)"}</p>
+                          <p className="font-medium">{title || "(Not set)"}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">City</p>
-                          <p className="font-medium">{formData.city || "(Not set)"}</p>
+                          <p className="font-medium">{city || "(Not set)"}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Duration</p>
-                          <p className="font-medium">{formData.duration} hours</p>
+                          <p className="font-medium">{duration} hours</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Max Group Size</p>
-                          <p className="font-medium">{formData.maxGroupSize} people</p>
+                          <p className="font-medium">{maxGroupSize} people</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Minimum Attendees</p>
@@ -1345,9 +1662,11 @@ export default function NewTourPage() {
                         <div>
                           <p className="text-muted-foreground">Languages</p>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {(selectedLanguages.length > 0 ? selectedLanguages : ["English"]).map((lang) => (
-                              <Badge key={lang}>{lang}</Badge>
-                            ))}
+                            {(selectedLanguages.length > 0 ? selectedLanguages : ["English"]).map(
+                              (lang) => (
+                                <Badge key={lang}>{lang}</Badge>
+                              ),
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1376,19 +1695,23 @@ export default function NewTourPage() {
 
                   <div>
                     <h3 className="font-semibold mb-2">Description</h3>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{formData.description || "(Not set)"}</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {description || "(Not set)"}
+                    </p>
                   </div>
 
                   <div>
                     <h3 className="font-semibold mb-2">Highlights/Stops</h3>
                     <ul className="text-sm text-muted-foreground space-y-1">
                       {highlights.filter((h) => h.trim()).length > 0 ? (
-                        highlights.filter((h) => h.trim()).map((h, i) => (
-                          <li key={i} className="flex gap-2">
-                            <span>•</span>
-                            <span>{h}</span>
-                          </li>
-                        ))
+                        highlights
+                          .filter((h) => h.trim())
+                          .map((h, i) => (
+                            <li key={i} className="flex gap-2">
+                              <span>•</span>
+                              <span>{h}</span>
+                            </li>
+                          ))
                       ) : (
                         <li>No highlights added</li>
                       )}
@@ -1401,13 +1724,17 @@ export default function NewTourPage() {
                     {publishBlockers.length === 0 ? (
                       <Alert className="border-green-200 bg-green-50">
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <AlertDescription className="text-green-700">Your tour is ready to publish!</AlertDescription>
+                        <AlertDescription className="text-green-700">
+                          Your tour is ready to publish!
+                        </AlertDescription>
                       </Alert>
                     ) : (
                       <Alert className="border-destructive/30 bg-destructive/5">
                         <AlertCircle className="h-4 w-4 text-destructive" />
                         <AlertDescription>
-                          <p className="font-medium text-destructive mb-1">Complete the following before publishing:</p>
+                          <p className="font-medium text-destructive mb-1">
+                            Complete the following before publishing:
+                          </p>
                           <ul className="space-y-0.5 text-sm text-destructive/90">
                             {publishBlockers.map((b) => (
                               <li key={b}>• {b}</li>
@@ -1419,7 +1746,11 @@ export default function NewTourPage() {
                   </div>
 
                   <div className="flex flex-col sm:flex-row justify-between gap-2">
-                    <Button variant="outline" onClick={() => setCurrentStep(5)} className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      onClick={() => goToStep(5)}
+                      className="w-full sm:w-auto"
+                    >
                       Back
                     </Button>
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -1445,7 +1776,6 @@ export default function NewTourPage() {
               </Card>
             )}
           </div>
-        </div>
       </div>
     </div>
   )

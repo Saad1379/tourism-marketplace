@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
+import { signIn as nextAuthSignIn } from "next-auth/react"
 import { trackFunnelEvent } from "@/lib/analytics/ga"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
@@ -131,21 +132,18 @@ export default function LoginPage() {
     })
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
+      // Check MFA requirement via a lightweight Supabase sign-in probe. If MFA
+      // is required we handle it client-side with Supabase (NextAuth doesn't
+      // have a built-in MFA flow) and re-sync into NextAuth afterwards.
+      const { data: probe, error: probeError } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
         password,
-        options: {
-          ...(rememberMe && {
-            data: { remember_me: true },
-          }),
-        },
       })
 
-      if (authError) {
-        throw authError
-      }
+      if (probeError) throw probeError
 
-      if (!data.user?.email_confirmed_at) {
+      if (!probe.user?.email_confirmed_at) {
+        await supabase.auth.signOut()
         setError("Please verify your email before logging in. Check your inbox for the confirmation link.")
         setIsLoading(false)
         return
@@ -162,23 +160,37 @@ export default function LoginPage() {
         return
       }
 
-      const { data: profile } = await supabase.from("profiles").select("role, guide_approval_status").eq("id", data.user.id).single()
+      // Guard: block guides with unapproved applications
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, guide_approval_status")
+        .eq("id", probe.user.id)
+        .single()
 
-      const role = profile?.role || data.user?.user_metadata?.role || "tourist"
+      const role = profile?.role || probe.user?.user_metadata?.role || "tourist"
 
-      // Block guides who haven't been approved yet
       if (role === "guide" && profile?.guide_approval_status === "pending") {
         await supabase.auth.signOut()
         setError("Your guide application is currently under review. You will receive an email once it has been approved.")
         setIsLoading(false)
         return
       }
-
       if (role === "guide" && profile?.guide_approval_status === "rejected") {
         await supabase.auth.signOut()
         setError("Your guide application was not approved. Please contact support for more information.")
         setIsLoading(false)
         return
+      }
+
+      // Establish the NextAuth session (persists via the NextAuth cookie).
+      const result = await nextAuthSignIn("credentials", {
+        email: trimmedEmail,
+        password,
+        redirect: false,
+      })
+
+      if (!result || result.error) {
+        throw new Error(result?.error || "Sign-in failed")
       }
 
       let redirectUrl: string
@@ -261,6 +273,17 @@ export default function LoginPage() {
         redirectUrl = "/profile"
       }
 
+      // After MFA success, mirror the authenticated session into NextAuth so
+      // client-side session state persists through refreshes.
+      const mfaNextAuth = await nextAuthSignIn("credentials", {
+        email: email.trim(),
+        password,
+        redirect: false,
+      })
+      if (!mfaNextAuth || mfaNextAuth.error) {
+        throw new Error(mfaNextAuth?.error || "Failed to establish session")
+      }
+
       trackFunnelEvent("auth_completed", {
         auth_method: "password_mfa",
         user_role: role,
@@ -286,19 +309,9 @@ export default function LoginPage() {
     })
 
     try {
-      const supabase = createClient()
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?role=tourist`,
-        },
+      await nextAuthSignIn("google", {
+        callbackUrl: redirectTo || "/profile",
       })
-
-      if (oauthError) throw oauthError
-
-      if (data?.url) {
-        window.location.href = data.url
-      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred during Google sign in"
       setError(errorMessage)

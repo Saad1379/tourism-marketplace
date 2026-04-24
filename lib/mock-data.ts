@@ -111,6 +111,12 @@ export const featuredCities = [
     tourCount: 124,
   },
   {
+    name: "Lisbon",
+    country: "Portugal",
+    image: "/lisbon.jpg",
+    tourCount: 45,
+  },
+  {
     name: "Amsterdam",
     country: "Netherlands",
     image: "/placeholder.svg?height=500&width=400",

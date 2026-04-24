@@ -3,7 +3,7 @@
 import type React from "react"
 import { Suspense } from "react"
 import { Analytics } from "@vercel/analytics/next"
-import { AuthProvider } from "@/lib/supabase/auth-context"
+import { AuthProvider } from "@/components/providers/auth-provider"
 import { AuthLoadingState } from "@/components/auth-loading-state"
 import { AnalyticsSetup } from "@/components/analytics-setup"
 import { AssistantWidget } from "@/components/assistant/assistant-widget"
