@@ -15,7 +15,7 @@ export type StaticBlogPost = {
 
 export const TIPPING_GUIDE_POST: StaticBlogPost = {
   title: "How Much Should You Tip a Walking Tour Guide in Paris?",
-  metaTitle: "How Much to Tip a Tour Guide in Paris (2026 Guide) | TipWalk",
+  metaTitle: "How Much to Tip a Tour Guide in Paris (2026 Guide) | Touricho",
   metaDescription:
     "Wondering how much to tip your walking tour guide in Paris? The honest answer from a Paris tour operator — with real numbers and local context.",
   slug: "how-much-to-tip-tour-guide-paris",
@@ -30,7 +30,7 @@ export const TIPPING_GUIDE_POST: StaticBlogPost = {
       heading: "What's a Normal Tip for a Tour Guide in Paris?",
       paragraphs: [
         "Most guests on tip-based walking tours in Paris tip between €10 and €20 per person. On a 2-hour tour with a knowledgeable local guide, €15 is a solid benchmark. If the tour genuinely surprised you — great stories, hidden spots, personal recommendations — €20 is a meaningful way to say so.",
-        "GuruWalk, one of the largest free tour platforms in Europe, suggests €15–50 per person. At TipWalk, we suggest €10–20 because we want tipping to feel natural, not pressured. Our guides run small groups of maximum 10 guests, so a reasonable tip from everyone in the group adds up to a fair wage for a morning's work.",
+        "GuruWalk, one of the largest free tour platforms in Europe, suggests €15–50 per person. At Touricho, we suggest €10–20 because we want tipping to feel natural, not pressured. Our guides run small groups of maximum 10 guests, so a reasonable tip from everyone in the group adds up to a fair wage for a morning's work.",
       ],
     },
     {
@@ -44,7 +44,7 @@ export const TIPPING_GUIDE_POST: StaticBlogPost = {
     {
       heading: "How to Tip in Paris — Cash or Card?",
       paragraphs: [
-        "Most guides in Paris accept both cash and card. At TipWalk, our guides accept tips by card through the platform, so you don't need to carry euros specifically for the tip. If you prefer cash, €10 and €20 notes are always appreciated.",
+        "Most guides in Paris accept both cash and card. At Touricho, our guides accept tips by card through the platform, so you don't need to carry euros specifically for the tip. If you prefer cash, €10 and €20 notes are always appreciated.",
       ],
     },
     {

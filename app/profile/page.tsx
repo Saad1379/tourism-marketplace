@@ -20,6 +20,7 @@ import {
   TrendingUp,
   Bell,
   Trash2,
+  Car,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   const { user, session, profile, isLoading } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [bookings, setBookings] = useState<any[]>([])
+  const [carBookings, setCarBookings] = useState<any[]>([])
   const [notifications, setNotifications] = useState<any[]>([])
   const [wishlist, setWishlist] = useState<any[]>([])
   const [dataLoading, setDataLoading] = useState(false)
@@ -84,20 +86,29 @@ export default function ProfilePage() {
           Authorization: `Bearer ${session.access_token}`,
         }
 
-        const [bookingsRes, notificationsRes, wishlistRes] = await Promise.all([
+        const [bookingsRes, notificationsRes, wishlistRes, carBookingsRes] = await Promise.all([
           fetch("/api/bookings?role=tourist", { headers }),
           fetch("/api/notifications", { headers }),
           fetch("/api/wishlists", { headers }),
+          fetch("/api/bookings?role=buyer", { headers }),
         ])
 
         if (bookingsRes.ok) {
           const data = await bookingsRes.json()
           const bookingsArray = Array.isArray(data) ? data : []
-          setBookings(bookingsArray)
+          // Tour bookings: those with tour_schedules attached
+          const tourOnly = bookingsArray.filter((b: any) =>
+            b.resource_type === "tour" || (!b.resource_type && b.tour_schedules),
+          )
+          setBookings(tourOnly)
 
-          // Calculate stats from real data
-          const cities = new Set(bookingsArray.map((b: any) => b.tour_schedules?.tours?.city).filter(Boolean))
-          const reviews = bookingsArray.filter((b: any) => b.reviews && b.reviews.length > 0)
+          // Car bookings: resource_type === 'car'
+          const carOnly = bookingsArray.filter((b: any) => b.resource_type === "car")
+          setCarBookings(carOnly)
+
+          // Calculate stats from real tour data
+          const cities = new Set(tourOnly.map((b: any) => b.tour_schedules?.tours?.city).filter(Boolean))
+          const reviews = tourOnly.filter((b: any) => b.reviews && b.reviews.length > 0)
           setStats({
             citiesVisited: cities.size,
             reviewsWritten: reviews.length,
@@ -234,6 +245,10 @@ export default function ProfilePage() {
         const startTime = b.tour_schedules?.start_time
         return startTime && new Date(startTime) <= new Date() && b.status === "confirmed"
       })
+    : []
+  // Car bookings — active/upcoming
+  const safeCarBookings = Array.isArray(carBookings)
+    ? carBookings.filter((b) => ["confirmed", "upcoming", "pending"].includes(b.status))
     : []
   const safeWishlist = Array.isArray(wishlist) ? wishlist : []
   const safeNotifications = Array.isArray(notifications) ? notifications : []
@@ -590,71 +605,116 @@ export default function ProfilePage() {
 
           {/* Bookings Tab */}
           <TabsContent value="bookings">
-            <Card className="dashboard-card">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>All Bookings</CardTitle>
-                    <CardDescription>View and manage all your tour bookings</CardDescription>
-                  </div>
-                  <Link href="/bookings">
-                    <Button>View Full Booking History</Button>
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[...safeUpcomingBookings, ...safePastBookings].slice(0, 5).map((booking) => {
-                    const tour = booking.tour_schedules?.tours
-                    const images = tour?.images || tour?.photos || []
-                    const image = images[0] || "/placeholder.svg"
-                    const startTime = new Date(booking.tour_schedules?.start_time)
-                    const isUpcoming = startTime > new Date()
-                    const canConfirm = booking.attendance && !booking.attendance[0]?.confirmed_by_tourist
+            <div className="space-y-6">
+              {/* Car bookings section */}
+              {safeCarBookings.length > 0 && (
+                <Card className="dashboard-card">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Car className="h-5 w-5 text-primary" />
+                      Car Bookings
+                    </CardTitle>
+                    <CardDescription>Your active car rental bookings</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {safeCarBookings.map((booking) => (
+                        <div key={booking.id} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
+                          <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Car className="h-6 w-6 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant="default">Car Rental</Badge>
+                              <Badge variant="secondary" className="capitalize">{booking.status}</Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              Booking ID: <span className="font-mono text-xs">{booking.id.slice(0, 8)}…</span>
+                            </p>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Guests: {booking.total_guests ?? (booking.adults + (booking.children ?? 0))}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <Badge variant="outline" className="capitalize">{booking.status}</Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                    return (
-                      <div key={booking.id} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
-                        <div className="w-full md:w-32 h-24 rounded-lg overflow-hidden shrink-0">
-                          <Image
-                            src={image}
-                            alt={tour?.title || "Tour"}
-                            width={128}
-                            height={96}
-                            className="object-cover w-full h-full"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant={isUpcoming ? "default" : "secondary"}>
-                              {isUpcoming ? "Upcoming" : "Completed"}
-                            </Badge>
-                            {canConfirm && (
-                              <Badge className="bg-primary/10 text-primary">Needs Confirmation</Badge>
-                            )}
+              {/* Tour bookings section */}
+              <Card className="dashboard-card">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Tour Bookings</CardTitle>
+                      <CardDescription>View and manage all your tour bookings</CardDescription>
+                    </div>
+                    <Link href="/bookings">
+                      <Button>View Full Booking History</Button>
+                    </Link>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[...safeUpcomingBookings, ...safePastBookings].slice(0, 5).map((booking) => {
+                      const tour = booking.tour_schedules?.tours
+                      const images = tour?.images || tour?.photos || []
+                      const image = images[0] || "/placeholder.svg"
+                      const startTime = new Date(booking.tour_schedules?.start_time)
+                      const isUpcoming = startTime > new Date()
+                      const canConfirm = booking.attendance && !booking.attendance[0]?.confirmed_by_tourist
+
+                      return (
+                        <div key={booking.id} className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg">
+                          <div className="w-full md:w-32 h-24 rounded-lg overflow-hidden shrink-0">
+                            <Image
+                              src={image}
+                              alt={tour?.title || "Tour"}
+                              width={128}
+                              height={96}
+                              className="object-cover w-full h-full"
+                            />
                           </div>
-                          <h3 className="font-semibold">{tour?.title || "Tour"}</h3>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>
-                              {tour?.city}, {tour?.country}
-                            </span>
-                            <span className="text-muted-foreground/50">|</span>
-                            <span>{startTime.toLocaleDateString()}</span>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Badge variant={isUpcoming ? "default" : "secondary"}>
+                                {isUpcoming ? "Upcoming" : "Completed"}
+                              </Badge>
+                              {canConfirm && (
+                                <Badge className="bg-primary/10 text-primary">Needs Confirmation</Badge>
+                              )}
+                            </div>
+                            <h3 className="font-semibold">{tour?.title || "Tour"}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                              <MapPin className="h-3 w-3" />
+                              <span>
+                                {tour?.city}, {tour?.country}
+                              </span>
+                              <span className="text-muted-foreground/50">|</span>
+                              <span>{startTime.toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <Link href="/bookings">
+                              <Button variant="outline" size="sm" className="bg-transparent">
+                                View Details
+                              </Button>
+                            </Link>
                           </div>
                         </div>
-                        <div className="flex items-center">
-                          <Link href="/bookings">
-                            <Button variant="outline" size="sm" className="bg-transparent">
-                              View Details
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      )
+                    })}
+                    {safeUpcomingBookings.length === 0 && safePastBookings.length === 0 && (
+                      <div className="text-center py-8 text-muted-foreground">No tour bookings yet</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Wishlist Tab */}

@@ -2,12 +2,12 @@ import FormData from "form-data"
 import Mailgun from "mailgun.js"
 import { getPlatformGoogleReviewUrl, getPlatformTrustpilotReviewUrl } from "@/lib/review-qr"
 
-const MAILGUN_DOMAIN = "mail.tipwalk.com"
-const FROM_BOOKING = "Tipwalk <booking@mail.tipwalk.com>"
-const FROM_SUPPORT = "Tipwalk <support@mail.tipwalk.com>"
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://tipwalk.com"
+const MAILGUN_DOMAIN = "mail.touricho.com"
+const FROM_BOOKING = "Touricho <booking@mail.touricho.com>"
+const FROM_SUPPORT = "Touricho <support@mail.touricho.com>"
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://touricho.com"
 const DEFAULT_GOOGLE_REVIEW_URL = "https://g.page/r/CXcrrcfFl5YNEAE/review"
-const DEFAULT_TRUSTPILOT_REVIEW_URL = "https://www.tipwalk.com/rt/f99e4c9eeff4c582d5e84f31e321e88e8450b98949434ee7"
+const DEFAULT_TRUSTPILOT_REVIEW_URL = "https://www.touricho.com/rt/f99e4c9eeff4c582d5e84f31e321e88e8450b98949434ee7"
 
 function getClient() {
   const mailgun = new Mailgun(FormData)
@@ -52,7 +52,7 @@ export async function sendGuideApprovalEmail(guideName: string, guideEmail: stri
   <div style="padding:24px;background:#f9fafb;border-radius:0 0 8px 8px;border:1px solid #e5e7eb">
     <p style="margin:0 0 16px">Hi <strong>${guideName}</strong>,</p>
     <p style="margin:0 0 16px">
-      Congratulations! Your application to become a guide on <strong>Tipwalk</strong> has been
+      Congratulations! Your application to become a guide on <strong>Touricho</strong> has been
       <strong style="color:#16a34a">approved</strong>. Welcome to our community of local experts!
     </p>
     <p style="margin:0 0 24px">
@@ -67,29 +67,29 @@ export async function sendGuideApprovalEmail(guideName: string, guideEmail: stri
     <hr style="border:none;border-top:1px solid #e5e7eb;margin-bottom:16px" />
     <p style="margin:0;font-size:13px;color:#6b7280">
       If you have any questions, reply to this email or contact us at
-      <a href="mailto:support@mail.tipwalk.com" style="color:#16a34a">support@mail.tipwalk.com</a>.
+      <a href="mailto:support@mail.touricho.com" style="color:#16a34a">support@mail.touricho.com</a>.
     </p>
     <p style="margin:16px 0 0;font-size:14px;color:#6b7280">
-      See you on the road,<br><strong>The Tipwalk Team</strong>
+      See you on the road,<br><strong>The Touricho Team</strong>
     </p>
   </div>
 </div>`
 
   const text = `Hi ${guideName},
 
-Congratulations! Your application to become a guide on Tipwalk has been approved.
+Congratulations! Your application to become a guide on Touricho has been approved.
 
 You can now log in and start setting up your tours:
 ${APP_URL}/login
 
-If you have any questions, contact us at support@mail.tipwalk.com.
+If you have any questions, contact us at support@mail.touricho.com.
 
 See you on the road,
-The Tipwalk Team`
+The Touricho Team`
 
   await sendEmail({
     to: `${guideName} <${guideEmail}>`,
-    subject: "Your Tipwalk Guide Application has been Approved!",
+    subject: "Your Touricho Guide Application has been Approved!",
     html,
     text,
     from: FROM_SUPPORT,
@@ -172,7 +172,7 @@ Please arrive 10 minutes before the tour starts.
 ${reviewLinksText}
 
 See you soon,
-The Tipwalk Team`
+The Touricho Team`
 
   const touristHtml = `
 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333">
@@ -214,7 +214,7 @@ The Tipwalk Team`
     </table>
     <p style="margin:0 0 8px;font-size:14px;color:#6b7280">Please arrive 10 minutes before the tour starts.</p>
 ${reviewLinksHtml}
-    <p style="margin:24px 0 0;font-size:14px;color:#6b7280">See you soon,<br><strong>The Tipwalk Team</strong></p>
+    <p style="margin:24px 0 0;font-size:14px;color:#6b7280">See you soon,<br><strong>The Touricho Team</strong></p>
   </div>
 </div>`
 
@@ -232,7 +232,7 @@ Booking Reference: ${data.bookingId}
 
 Log in to your dashboard to view booking details.
 
-The Tipwalk Team`
+The Touricho Team`
 
   const guideHtml = `
 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#333">
@@ -268,7 +268,7 @@ The Tipwalk Team`
         <td style="padding:10px 0;font-family:monospace;font-size:12px">${data.bookingId}</td>
       </tr>
     </table>
-    <p style="margin:24px 0 0;font-size:14px;color:#6b7280">Log in to your dashboard to view full booking details.<br><br><strong>The Tipwalk Team</strong></p>
+    <p style="margin:24px 0 0;font-size:14px;color:#6b7280">Log in to your dashboard to view full booking details.<br><br><strong>The Touricho Team</strong></p>
   </div>
 </div>`
 

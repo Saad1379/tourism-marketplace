@@ -2,8 +2,8 @@ import { BRAND_SITE_HOST, BRAND_SITE_URL } from "@/lib/seo/brand"
 
 const FALLBACK_SITE_URL = BRAND_SITE_URL
 
-function normalizeTipwalkHost(url: URL): URL {
-  if (url.hostname === "tipwalk.com") {
+function normalizeTourichoHost(url: URL): URL {
+  if (url.hostname === "touricho.com") {
     url.hostname = BRAND_SITE_HOST
   }
   if (url.hostname === BRAND_SITE_HOST && url.protocol !== "https:") {
@@ -17,7 +17,7 @@ export function getSiteUrl(): string {
   if (!configured) return FALLBACK_SITE_URL
 
   try {
-    const parsed = normalizeTipwalkHost(new URL(configured))
+    const parsed = normalizeTourichoHost(new URL(configured))
     return parsed.origin
   } catch {
     return FALLBACK_SITE_URL

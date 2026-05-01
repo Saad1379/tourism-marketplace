@@ -23,11 +23,11 @@ type DbBlogPostRow = {
   updated_at: string | null
 }
 
-const BLOG_CANONICAL_URL = "https://www.tipwalk.com/blog"
+const BLOG_CANONICAL_URL = "https://www.touricho.com/blog"
 
 export const metadata: Metadata = {
-  title: "Paris Travel Guide & Walking Tour Tips | TipWalk Blog",
-  description: "Tips for visiting Paris, walking tour guides, and local insights from TipWalk.",
+  title: "Paris Travel Guide & Walking Tour Tips | Touricho Blog",
+  description: "Tips for visiting Paris, walking tour guides, and local insights from Touricho.",
   alternates: { canonical: BLOG_CANONICAL_URL },
 }
 
@@ -141,10 +141,10 @@ export default async function BlogIndexPage() {
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
           <header className="mb-10 max-w-3xl space-y-3">
             <h1 className="text-3xl font-semibold tracking-tight text-[color:var(--landing-ink)] sm:text-4xl">
-              TipWalk Blog
+              Touricho Blog
             </h1>
             <p className="text-base text-[color:var(--landing-muted)] sm:text-lg">
-              Tips for visiting Paris, walking tour guides, and local insights from TipWalk.
+              Tips for visiting Paris, walking tour guides, and local insights from Touricho.
             </p>
           </header>
 

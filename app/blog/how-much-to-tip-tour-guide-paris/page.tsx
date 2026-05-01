@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { TIPPING_GUIDE_POST } from "@/lib/blog/static-posts"
 
-const CANONICAL_URL = "https://www.tipwalk.com/blog/how-much-to-tip-tour-guide-paris"
+const CANONICAL_URL = "https://www.touricho.com/blog/how-much-to-tip-tour-guide-paris"
 
 export const metadata: Metadata = {
   title: { absolute: TIPPING_GUIDE_POST.metaTitle },
@@ -14,8 +14,8 @@ const articleJsonLd = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: "How Much Should You Tip a Walking Tour Guide in Paris?",
-  author: { "@type": "Organization", name: "TipWalk" },
-  publisher: { "@type": "Organization", name: "TipWalk", url: "https://www.tipwalk.com" },
+  author: { "@type": "Organization", name: "Touricho" },
+  publisher: { "@type": "Organization", name: "Touricho", url: "https://www.touricho.com" },
   datePublished: "2026-03-27",
   description: "How much to tip a walking tour guide in Paris — real numbers from a Paris tour operator.",
 }
@@ -45,7 +45,7 @@ const faqJsonLd = {
       name: "Should I tip in cash or by card in Paris?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Many guides accept both cash and card. At TipWalk, guides can accept card tips through the platform, and cash is also appreciated.",
+        text: "Many guides accept both cash and card. At Touricho, guides can accept card tips through the platform, and cash is also appreciated.",
       },
     },
     {

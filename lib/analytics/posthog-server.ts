@@ -39,7 +39,7 @@ export async function capturePostHogServerEvent(payload: ServerCapturePayload) {
     properties: {
       ...payload.properties,
       ...(payload.insertId ? { $insert_id: payload.insertId } : {}),
-      $source: "tipwalk-server",
+      $source: "touricho-server",
     },
   }
 

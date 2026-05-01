@@ -27,6 +27,8 @@ async function fetchSumsubToken(): Promise<string> {
   return data.token
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function VerificationClient() {
   const router = useRouter()
   const { session, profile, isLoading, refreshProfile } = useAuth()
@@ -40,7 +42,7 @@ export default function VerificationClient() {
   useEffect(() => {
     if (!isLoading) {
       if (!session) router.push("/login")
-      if (profile && profile.role !== "guide") router.push("/")
+      if (profile && !isSeller(profile.role)) router.push("/")
     }
   }, [isLoading, session, profile, router])
 
@@ -53,7 +55,7 @@ export default function VerificationClient() {
 
   // Fetch token once — skip if already have a token, already submitted, or already verified
   useEffect(() => {
-    if (!session || !profile || profile.role !== "guide" || profile.guide_verified || accessToken || submitted) return
+    if (!session || !profile || !isSeller(profile.role) || profile.guide_verified || accessToken || submitted) return
     setTokenLoading(true)
     fetchSumsubToken()
       .then((token) => setAccessToken(token))
@@ -97,7 +99,7 @@ export default function VerificationClient() {
     <main className="min-h-screen bg-muted/30 p-4 lg:p-6 space-y-6">
           <section>
             <h1 className="text-xl font-semibold">Verification</h1>
-            <p className="text-sm text-muted-foreground">Submit documents to unlock verified guide status.</p>
+            <p className="text-sm text-muted-foreground">Submit documents to unlock verified seller status.</p>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
@@ -116,7 +118,7 @@ export default function VerificationClient() {
                 <CardDescription>
                   {isVerified
                     ? "Your identity has been confirmed. Your profile now shows a verified badge."
-                    : "Complete the identity check below to unlock your verified guide badge."}
+                    : "Complete the identity check below to unlock your verified seller badge."}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -132,7 +134,7 @@ export default function VerificationClient() {
                       </p>
                     </div>
                     <Badge className="bg-primary/10 text-primary border-primary/20 px-4 py-1 text-sm">
-                      ✓ Verified Guide
+                      ✓ Verified Seller
                     </Badge>
                   </div>
                 ) : submitted ? (
@@ -190,7 +192,7 @@ export default function VerificationClient() {
               <Card>
                 <CardHeader>
                   <CardTitle>Why verify?</CardTitle>
-                  <CardDescription>Verified guides earn more trust and bookings.</CardDescription>
+                  <CardDescription>Verified sellers earn more trust and bookings.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {[

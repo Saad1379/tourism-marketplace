@@ -14,10 +14,10 @@ declare global {
   interface Window {
     fbq?: FbqFunction
     _fbq?: FbqFunction
-    __tipwalkLoadMetaPixel?: () => void
-    __tipwalkMetaPixelId?: string
-    __tipwalkMetaPixelLoaded?: boolean
-    __tipwalkMetaPixelInitialized?: boolean
+    __tourichoLoadMetaPixel?: () => void
+    __tourichoMetaPixelId?: string
+    __tourichoMetaPixelLoaded?: boolean
+    __tourichoMetaPixelInitialized?: boolean
   }
 }
 
@@ -33,23 +33,23 @@ function hasConsent() {
 
 function ensurePixelLoaded() {
   if (typeof window === "undefined") return
-  window.__tipwalkLoadMetaPixel?.()
+  window.__tourichoLoadMetaPixel?.()
 }
 
 function ensurePixelInitialized() {
   if (typeof window === "undefined") return
-  if (window.__tipwalkMetaPixelInitialized) return
+  if (window.__tourichoMetaPixelInitialized) return
   if (typeof window.fbq !== "function") return
 
   window.fbq("init", META_PIXEL_ID)
-  window.__tipwalkMetaPixelInitialized = true
+  window.__tourichoMetaPixelInitialized = true
 }
 
 function canTrack() {
   if (typeof window === "undefined") return false
   if (!isProductionRuntime()) return false
   if (!hasConsent()) return false
-  if (!window.__tipwalkMetaPixelInitialized) return false
+  if (!window.__tourichoMetaPixelInitialized) return false
   return typeof window.fbq === "function"
 }
 

@@ -20,6 +20,7 @@ import {
   Bell,
   SlidersHorizontal,
   FileText,
+  Car,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,17 +29,18 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/lib/supabase/auth-context"
 import { useToast } from "@/hooks/use-toast"
 import { createClient } from "@/lib/supabase/client"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 
 const adminNavItems = [
-  { icon: LayoutDashboard, label: "Overview", href: "/admin/overview" },
-  { icon: Map, label: "Tours", href: "/admin/tours" },
-  { icon: FileText, label: "Blog", href: "/admin/blog" },
-  { icon: Users, label: "Users", href: "/admin/users" },
-  { icon: UserCheck, label: "Guides", href: "/admin/guides" },
-  { icon: Tag, label: "Promo Codes", href: "/admin/promo-codes" },
-  { icon: CreditCard, label: "Credits", href: "/admin/credits" },
-  { icon: MapPin, label: "Cities", href: "/admin/cities" },
+  { icon: LayoutDashboard, label: "Overview",      href: "/admin/overview" },
+  { icon: Map,             label: "Tours",         href: "/admin/tours" },
+  { icon: Car,             label: "Cars",          href: "/admin/cars" },
+  { icon: FileText,        label: "Blog",          href: "/admin/blog" },
+  { icon: Users,           label: "Users",         href: "/admin/users" },
+  { icon: UserCheck,       label: "Guides",        href: "/admin/guides" },
+  { icon: Tag,             label: "Promo Codes",   href: "/admin/promo-codes" },
+  { icon: CreditCard,      label: "Credits",       href: "/admin/credits" },
+  { icon: MapPin,          label: "Cities",        href: "/admin/cities" },
   { icon: SlidersHorizontal, label: "Plan Settings", href: "/admin/plan-settings" },
 ]
 
@@ -150,8 +152,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between p-4 border-b">
-            <Link href="/admin/overview" className="flex items-center gap-2" aria-label="TipWalk Admin home">
-              <TipWalkLogo size="sm" textClassName="text-sm text-foreground" />
+            <Link href="/admin/overview" className="flex items-center gap-2" aria-label="Touricho Admin home">
+              <TourichoLogo size="sm" textClassName="text-sm text-foreground" />
               <div>
                 <div className="flex items-center gap-1">
                   <Shield className="h-3 w-3 text-primary" />

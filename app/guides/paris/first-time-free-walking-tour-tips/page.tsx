@@ -17,14 +17,14 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: PAGE_PATH },
   openGraph: {
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
     url: `${SITE_URL}${PAGE_PATH}`,
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
   },
 }
@@ -68,7 +68,7 @@ export default async function FirstTimeParisTourTipsPage() {
               <article className="public-shell-card p-5">
                 <h2 className="text-lg font-semibold text-[color:var(--landing-ink)]">3. Understand the tip-based model</h2>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--landing-muted)]">
-                  You reserve for free on TipWalk. At the end of the experience, tip your guide based on the value you received. This keeps booking accessible while rewarding clear storytelling, useful recommendations, and a well-paced route.
+                  You reserve for free on Touricho. At the end of the experience, tip your guide based on the value you received. This keeps booking accessible while rewarding clear storytelling, useful recommendations, and a well-paced route.
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--landing-muted)]">
                   If your plans change, cancel early so other travelers can take the seat. This improves reliability for guides and keeps schedules available for guests who are ready to join.

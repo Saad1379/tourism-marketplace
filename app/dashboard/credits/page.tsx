@@ -54,6 +54,8 @@ type ActiveBoost = {
 
 const BOOST_OPTIONS = [{ id: "30", days: 30, credits: 30 }]
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function CreditsPage() {
   const router = useRouter()
   const supabase = createClient()
@@ -90,7 +92,7 @@ export default function CreditsPage() {
       return
     }
 
-    if (profile && profile.role !== "guide") {
+    if (profile && !isSeller(profile.role)) {
       router.push("/")
     }
   }, [authLoading, user, profile, router])
@@ -104,7 +106,7 @@ export default function CreditsPage() {
   }, [])
 
   useEffect(() => {
-    if (!user || profile?.role !== "guide") return
+    if (!user || !isSeller(profile?.role)) return
 
     const fetchData = async () => {
       try {
@@ -294,7 +296,7 @@ export default function CreditsPage() {
     )
   }
 
-  if (!user || profile?.role !== "guide") {
+  if (!user || !isSeller(profile?.role)) {
     return null
   }
 
@@ -312,7 +314,7 @@ export default function CreditsPage() {
       <section className="rounded-2xl border border-border/60 bg-gradient-to-r from-primary via-primary/95 to-secondary p-6 text-white">
         <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-white/80 text-sm">Guide Wallet</p>
+            <p className="text-white/80 text-sm">Seller Wallet</p>
             <p className="text-5xl font-bold tracking-tight">{currentCredits}</p>
             <p className="text-white/80 mt-1">credits available</p>
           </div>

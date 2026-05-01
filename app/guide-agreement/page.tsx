@@ -4,14 +4,14 @@ import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 
 export const metadata: Metadata = {
-  title: "Guide Agreement | TipWalk",
-  description: "Summary of operational and platform expectations for TipWalk guides.",
+  title: "Guide Agreement | Touricho",
+  description: "Summary of operational and platform expectations for Touricho guides.",
   alternates: {
     canonical: "/guide-agreement",
   },
   openGraph: {
-    title: "Guide Agreement | TipWalk",
-    description: "Summary of operational and platform expectations for TipWalk guides.",
+    title: "Guide Agreement | Touricho",
+    description: "Summary of operational and platform expectations for Touricho guides.",
     url: "/guide-agreement",
     type: "article",
   },
@@ -26,7 +26,7 @@ export default function GuideAgreementPage() {
           <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Guide Agreement</h1>
             <p className="mt-3 max-w-3xl text-muted-foreground">
-              This summary outlines basic expectations for guides using TipWalk. It does not replace full legal terms.
+              This summary outlines basic expectations for guides using Touricho. It does not replace full legal terms.
             </p>
           </div>
         </section>
@@ -48,7 +48,7 @@ export default function GuideAgreementPage() {
             <div>
               <h2 className="text-base font-semibold text-foreground">3. Payments and tips</h2>
               <p className="mt-2">
-                TipWalk supports free reservations. Guides keep tips according to current platform terms and payout policies.
+                Touricho supports free reservations. Guides keep tips according to current platform terms and payout policies.
               </p>
             </div>
             <div>

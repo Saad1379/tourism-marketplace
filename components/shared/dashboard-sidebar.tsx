@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAuth } from "@/lib/supabase/auth-context"
 import { useToast } from "@/hooks/use-toast"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 
 export interface SidebarItem {
   icon: React.ComponentType<{ className?: string }>
@@ -67,8 +67,8 @@ export function DashboardSidebar({ items, onClose, userName, userEmail }: Dashbo
     <div className="flex h-full flex-col bg-transparent">
       {/* Brand header */}
       <div className="flex h-14 flex-shrink-0 items-center justify-between border-b border-[color:var(--landing-border)] px-4">
-        <Link href="/" aria-label="TipWalk home">
-          <TipWalkLogo size="sm" textClassName="text-[color:var(--landing-ink)] text-sm" />
+        <Link href="/" aria-label="Touricho home">
+          <TourichoLogo size="sm" textClassName="text-[color:var(--landing-ink)] text-sm" />
         </Link>
         <Button
           variant="ghost"

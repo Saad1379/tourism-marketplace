@@ -9,6 +9,8 @@ import { DESCRIPTION_MIN_MESSAGE, TOUR_DESCRIPTION_MIN_CHARS } from "@/lib/tours
 import { sanitizeStopNames, syncAndRefreshTourStopContent } from "@/lib/tours/tour-stops"
 import { type NextRequest, NextResponse } from "next/server"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 function parsePositiveInteger(value: unknown, fallback: number): number {
   const parsed = Number.parseInt(String(value ?? fallback), 10)
   if (!Number.isFinite(parsed) || Number.isNaN(parsed)) return fallback
@@ -64,9 +66,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to access or create profile" }, { status: 500 })
     }
 
-    if (profile.role && profile.role !== "guide") {
+    if (profile.role && !isSeller(profile.role)) {
       return NextResponse.json(
-        { error: "Only guides can create tours. Please upgrade your account to guide." },
+        { error: "Only sellers can create tours. Please upgrade your account to seller." },
         { status: 403 },
       )
     }

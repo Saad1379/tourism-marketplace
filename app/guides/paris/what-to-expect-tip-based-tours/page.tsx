@@ -17,14 +17,14 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: PAGE_PATH },
   openGraph: {
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
     url: `${SITE_URL}${PAGE_PATH}`,
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
   },
 }
@@ -49,7 +49,7 @@ export default async function TipBasedParisTourExpectationsPage() {
               <article className="public-shell-card p-5">
                 <h2 className="text-lg font-semibold text-[color:var(--landing-ink)]">How reservation works</h2>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--landing-muted)]">
-                  On TipWalk, guests reserve a tour spot without paying upfront. You choose a date, time, and guest count, then receive confirmation details for the meeting point. This removes payment friction and helps travelers compare multiple options before committing.
+                  On Touricho, guests reserve a tour spot without paying upfront. You choose a date, time, and guest count, then receive confirmation details for the meeting point. This removes payment friction and helps travelers compare multiple options before committing.
                 </p>
               </article>
 

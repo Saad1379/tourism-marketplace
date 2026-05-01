@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Free Walking Tours | Explore cities across Europe | TipWalk",
+  title: "Free Walking Tours | Explore cities across Europe | Touricho",
   description:
     "Discover amazing free walking tours in 35+ cities across Europe. Book authentic local experiences with passionate guides. Pay what you want, tip-based tours.",
   keywords: [

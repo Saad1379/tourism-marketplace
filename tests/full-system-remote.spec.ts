@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test"
 import { login } from "./helpers/login"
 
-const BASE_URL = process.env.BASE_URL || "https://tipwalk.vercel.app"
+const BASE_URL = process.env.BASE_URL || "https://touricho.vercel.app"
 
 test.describe("FULL SYSTEM REMOTE", () => {
   test("Tourist complete booking flow: login → tour → message guide → cancel booking", async ({ page }) => {

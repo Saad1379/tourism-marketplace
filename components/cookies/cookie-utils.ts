@@ -1,6 +1,6 @@
 // Cookie consent utilities
 
-const COOKIE_NAME = "tipwalk_cookie_consent"
+const COOKIE_NAME = "touricho_cookie_consent"
 const COOKIE_EXPIRY_DAYS = 365
 
 export type ConsentChoice = "accepted" | "rejected" | null

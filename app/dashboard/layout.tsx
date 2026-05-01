@@ -4,9 +4,11 @@ import { DashboardLayoutPage } from "@/components/shared/dashboard-layout"
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export const metadata: Metadata = {
-  title: "Guide Dashboard | TipWalk",
-  description: "Manage your tours, bookings, messages, and earnings from your TipWalk guide dashboard.",
+  title: "Seller Dashboard | Touricho",
+  description: "Manage your listings, bookings, messages, and earnings from your Touricho seller dashboard.",
   robots: "noindex, nofollow",
 }
 
@@ -22,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
 
-  if (!profile || profile.role !== "guide") {
+  if (!profile || !isSeller(profile.role)) {
     redirect("/")
   }
 

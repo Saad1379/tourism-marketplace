@@ -290,7 +290,7 @@ export default function TourQrReviewClient({ token }: TourQrReviewClientProps) {
                   <div className="space-y-3 rounded-lg border border-border bg-background/90 p-3">
                     <div>
                       <p className="text-sm font-medium text-foreground">Optional: share on public platforms</p>
-                      <p className="text-xs text-muted-foreground">This helps other travelers discover TipWalk.</p>
+                      <p className="text-xs text-muted-foreground">This helps other travelers discover Touricho.</p>
                     </div>
 
                     <div className="space-y-2">
@@ -303,7 +303,7 @@ export default function TourQrReviewClient({ token }: TourQrReviewClientProps) {
                         >
                           <span className="flex items-center gap-2">
                             <GoogleMark />
-                            <span>Review TipWalk on Google</span>
+                            <span>Review Touricho on Google</span>
                           </span>
                           <ExternalLink className="h-4 w-4 text-muted-foreground" />
                         </Button>
@@ -318,7 +318,7 @@ export default function TourQrReviewClient({ token }: TourQrReviewClientProps) {
                         >
                           <span className="flex items-center gap-2">
                             <TrustpilotMark />
-                            <span>Review TipWalk on Trustpilot</span>
+                            <span>Review Touricho on Trustpilot</span>
                           </span>
                           <ExternalLink className="h-4 w-4 text-[#0B8F5A]" />
                         </Button>

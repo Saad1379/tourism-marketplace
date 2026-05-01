@@ -108,7 +108,7 @@ export function ReviewsClient({ reviews, totalReviews }: ReviewsClientProps) {
           <div className="text-center mb-12">
             <h1 className="public-template-heading text-4xl font-bold tracking-tight lg:text-5xl">Real Stories from Real Travelers</h1>
             <p className="public-template-copy mt-4 max-w-2xl mx-auto text-lg">
-              Verified feedback from people who actually booked and joined tours on TipWalk.
+              Verified feedback from people who actually booked and joined tours on Touricho.
             </p>
           </div>
 

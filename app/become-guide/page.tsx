@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { isSeller } from "@/lib/marketplace/roles"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -213,7 +214,7 @@ const fallbackGuideStories: GuideStory[] = [
     name: "Charles Afeavo",
     city: "Paris",
     avatar: null,
-    quote: "TipWalk keeps operations simple. I publish availability, focus on quality tours, and get direct feedback after every walk.",
+    quote: "Touricho keeps operations simple. I publish availability, focus on quality tours, and get direct feedback after every walk.",
     tours: 80,
     rating: 5,
     reviewCount: 10,
@@ -235,13 +236,13 @@ function formatEur(value: number) {
 function getPlanDecisionCopy(planName: GuidePlanCard["name"]) {
   if (planName === "Free") {
     return {
-      bestFor: "Best for: new guides validating their first route",
+      bestFor: "Best for: new sellers validating their first service",
       upgradeWhen: "Upgrade when: your calendar or group caps start limiting bookings",
     }
   }
 
   return {
-    bestFor: "Best for: active guides running multiple tours per week",
+    bestFor: "Best for: active sellers running multiple services per week",
     upgradeWhen: "Upgrade when: you need scale without operational limits",
   }
 }
@@ -345,8 +346,8 @@ export default function BecomeGuidePage() {
             : prev.primaryLanguage,
         }))
         
-        // If they already clicked "Become Guide" (returning user), show them the form immediately
-        if (authProfile.role === "guide" && !authProfile.onboarding_completed) {
+        // If they already clicked "Become Seller" (returning user), show them the form immediately
+        if (isSeller(authProfile.role) && !authProfile.onboarding_completed) {
           setShowForm(true)
         }
       }
@@ -469,9 +470,9 @@ export default function BecomeGuidePage() {
   const proofMetrics = useMemo(
     () => [
       {
-        label: "Active guides",
+        label: "Active sellers",
         value: formatMetricValue(landingStats.activeGuides),
-        hint: "guides currently listing tours",
+        hint: "sellers currently listing services",
       },
       {
         label: "Active cities",
@@ -481,7 +482,7 @@ export default function BecomeGuidePage() {
       {
         label: "Completed bookings",
         value: formatMetricValue(landingStats.completedBookings),
-        hint: "bookings completed on TipWalk",
+        hint: "bookings completed on Touricho",
       },
       {
         label: "Traveler reviews",
@@ -561,11 +562,11 @@ export default function BecomeGuidePage() {
 
     if (typeof window !== "undefined") {
       window.dispatchEvent(
-        new CustomEvent("tipwalk:assistant-open", {
+        new CustomEvent("touricho:assistant-open", {
           detail: {
             mode: "guest",
             source,
-            prompt: "I am applying to become a guide. What is the fastest way to get approved?",
+            prompt: "I am applying to become a seller. What is the fastest way to get approved?",
           },
         }),
       )
@@ -820,7 +821,7 @@ export default function BecomeGuidePage() {
                   Share Your City, <span className="text-primary">Earn Your Way</span>
                 </h1>
                 <p className="public-template-copy mt-6 max-w-2xl text-lg leading-relaxed">
-                  Join passionate locals on TipWalk. Lead free walking tours, host smaller groups, and keep 100% of
+                  Join passionate locals on Touricho. Lead free walking tours, host smaller groups, and keep 100% of
                   traveler tips.
                 </p>
                 <p className="mt-3 text-sm font-semibold text-primary">Start in 60 seconds. No upfront subscription required.</p>
@@ -854,28 +855,28 @@ export default function BecomeGuidePage() {
                       <Shield className="h-4 w-4 text-primary" />
                       Verification-first onboarding
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">Identity and profile checks before first published tour.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Identity and profile checks before first published service.</p>
                   </div>
                   <div className="rounded-2xl border border-[color:var(--landing-border)] bg-[color:var(--landing-surface)] px-4 py-3">
                     <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       <Heart className="h-4 w-4 text-primary" />
                       Keep 100% of tips
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">No platform cut on guest tips received after tours.</p>
+                    <p className="mt-1 text-xs text-muted-foreground">No platform cut on guest tips received after services.</p>
                   </div>
                 </div>
 
                 <div className="mt-6 rounded-2xl border border-[color:var(--landing-border)] bg-[color:var(--landing-surface)] p-4">
-                  <p className="text-sm font-semibold text-foreground">Need help becoming a guide?</p>
+                  <p className="text-sm font-semibold text-foreground">Need help becoming a seller?</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     Get a fast answer now via assistant. If needed, we route you to human follow-up.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Button size="sm" className="landing-btn-coral" onClick={() => dispatchGuideAssistantOpen("hero_support")}>
-                      Open Guide Assistant
+                      Open Seller Assistant
                     </Button>
                     <Button size="sm" variant="outline" className="bg-transparent" asChild>
-                      <Link href="mailto:support@tipwalk.com">Email Support</Link>
+                      <Link href="mailto:support@touricho.com">Email Support</Link>
                     </Button>
                   </div>
                 </div>
@@ -998,7 +999,7 @@ export default function BecomeGuidePage() {
                     key={metric.label}
                     className="rounded-2xl border border-[color:var(--landing-border)] bg-[color:var(--landing-surface)] p-4"
                   >
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--landing-muted)]">{metric.label}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[color:var(--landing-muted)]">Active sellers</p>
                     <p className="mt-1 text-2xl font-bold text-[color:var(--landing-ink)]">{metric.value}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{metric.hint}</p>
                   </div>
@@ -1143,8 +1144,8 @@ export default function BecomeGuidePage() {
           <section className="public-section py-16 md:py-20">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="mx-auto max-w-2xl text-center">
-                <h2 className="public-template-heading text-3xl font-bold tracking-tight">Hear From Our Guides</h2>
-                <p className="public-template-copy mt-4 text-lg">Trusted feedback from guides already running tours.</p>
+                <h2 className="public-template-heading text-3xl font-bold tracking-tight">Hear From Our Sellers</h2>
+                <p className="public-template-copy mt-4 text-lg">Trusted feedback from sellers already running services.</p>
               </div>
               <div className="mt-10 grid gap-6 md:grid-cols-2">
                 {visibleGuideStories.map((guide) => (
@@ -1173,7 +1174,7 @@ export default function BecomeGuidePage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-semibold text-foreground">{guide.name}</p>
-                              <p className="text-sm text-muted-foreground">Guide in {guide.city}</p>
+                              <p className="text-sm text-muted-foreground">Seller in {guide.city}</p>
                             </div>
                             <div className="text-right text-sm">
                               <div className="flex items-center justify-end gap-1">
@@ -1196,7 +1197,7 @@ export default function BecomeGuidePage() {
           <section className="public-section py-16 md:py-24">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="mx-auto max-w-2xl text-center">
-                <h2 className="public-template-heading text-3xl font-bold tracking-tight">Why Become a Guide?</h2>
+                <h2 className="public-template-heading text-3xl font-bold tracking-tight">Why Become a Seller?</h2>
                 <p className="public-template-copy mt-4 text-lg">
                   Join our community of passionate storytellers and local experts
                 </p>
@@ -1306,7 +1307,7 @@ export default function BecomeGuidePage() {
                 Ready to Start Your Journey?
               </h2>
               <p className="public-template-copy mt-4 text-lg">
-                Join our community of guides and start sharing your city with the world.
+                Join our community of sellers and start sharing your city with the world.
               </p>
               <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                 <Button size="lg" className="landing-btn-coral" onClick={scrollToQuickApply}>
@@ -1320,7 +1321,7 @@ export default function BecomeGuidePage() {
                 Assistant gives fast guidance now, with human follow-up if needed.
               </p>
               <Button size="sm" variant="link" className="mt-2" asChild>
-                <Link href="mailto:support@tipwalk.com">support@tipwalk.com</Link>
+                <Link href="mailto:support@touricho.com">support@touricho.com</Link>
               </Button>
             </div>
           </section>
@@ -1343,7 +1344,7 @@ export default function BecomeGuidePage() {
             </div>
             <h1 className="public-template-heading text-3xl font-bold">Thank You for Your Interest!</h1>
             <p className="public-template-copy mt-4 text-lg">
-              We have received your guide application and our team is currently reviewing it.
+              We have received your seller application and our team is currently reviewing it.
             </p>
             <div className="public-shell-card mt-6 space-y-3 p-6 text-left">
               <div className="flex items-start gap-3">
@@ -1387,7 +1388,7 @@ export default function BecomeGuidePage() {
           {/* Progress Header */}
           <div className="mb-8">
             <div className="mb-4 flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-foreground">Become a Guide</h1>
+              <h1 className="text-2xl font-bold text-foreground">Become a Seller</h1>
               <button
                 onClick={() => setShowForm(false)}
                 className="text-sm text-muted-foreground hover:text-foreground"
@@ -1504,12 +1505,12 @@ export default function BecomeGuidePage() {
                   <div>
                     <h2 className="text-xl font-semibold text-foreground">About You</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Share your background and what makes you a great guide
+                      Share your background and what makes you a great seller
                     </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="city">City Where You'll Guide <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="city">City Where You'll Operate <span className="text-destructive">*</span></Label>
                     <Select value={formData.city} onValueChange={(value) => updateFormData("city", value)}>
                       <SelectTrigger className="mt-1.5">
                         <SelectValue placeholder="Select your city" />
@@ -1552,7 +1553,7 @@ export default function BecomeGuidePage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="experience">Guiding Experience</Label>
+                    <Label htmlFor="experience">Experience</Label>
                     <Textarea
                       id="experience"
                       value={formData.experience}
@@ -1597,7 +1598,7 @@ export default function BecomeGuidePage() {
                   <div className="rounded-xl border border-primary/25 bg-primary/5 p-4">
                     <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       <Shield className="h-4 w-4 text-primary" />
-                      Verification review before your first published tour
+                      Verification review before your first published service
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Our team reviews profile quality and identity checks to protect guest trust and improve booking conversion.
@@ -1612,7 +1613,7 @@ export default function BecomeGuidePage() {
                         required
                       />
                       <label htmlFor="agreeTerms" className="text-sm text-muted-foreground cursor-pointer">
-                        I agree to TipWalk's{" "}
+                        I agree to Touricho's{" "}
                         <Link href="/terms" className="text-primary hover:underline">
                           Terms of Service
                         </Link>{" "}
@@ -1665,7 +1666,7 @@ export default function BecomeGuidePage() {
                     Open Guide Assistant
                   </Button>
                   <Button type="button" size="sm" variant="outline" className="bg-transparent" asChild>
-                    <Link href="mailto:support@tipwalk.com">Email Support</Link>
+                    <Link href="mailto:support@touricho.com">Email Support</Link>
                   </Button>
                 </div>
               </div>

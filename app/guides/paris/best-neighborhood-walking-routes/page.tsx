@@ -17,14 +17,14 @@ export const metadata: Metadata = {
   description: PAGE_DESCRIPTION,
   alternates: { canonical: PAGE_PATH },
   openGraph: {
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
     url: `${SITE_URL}${PAGE_PATH}`,
     type: "article",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
   },
 }
@@ -102,7 +102,7 @@ export default async function ParisNeighborhoodWalkingRoutesPage() {
 
             {featuredTours.length > 0 ? (
               <article className="public-shell-card mt-6 p-5">
-                <h2 className="text-base font-semibold text-[color:var(--landing-ink)]">Popular Paris tours on TipWalk</h2>
+                <h2 className="text-base font-semibold text-[color:var(--landing-ink)]">Popular Paris tours on Touricho</h2>
                 <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                   {featuredTours.map((tour) => (
                     <li key={tour.id}>

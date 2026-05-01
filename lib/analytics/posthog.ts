@@ -86,7 +86,7 @@ function readDistinctIdFromPersistence() {
 function getDistinctId() {
   const sdkDistinctId = posthog.get_distinct_id?.()
   if (sdkDistinctId) return sdkDistinctId
-  return readDistinctIdFromPersistence() || "tipwalk-anonymous"
+  return readDistinctIdFromPersistence() || "touricho-anonymous"
 }
 
 async function captureDirect(event: string, properties: Record<string, unknown>) {
@@ -98,7 +98,7 @@ async function captureDirect(event: string, properties: Record<string, unknown>)
     distinct_id: getDistinctId(),
     properties: {
       ...properties,
-      $source: "tipwalk-client",
+      $source: "touricho-client",
     },
   }
 

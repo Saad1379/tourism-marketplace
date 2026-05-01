@@ -65,6 +65,8 @@ type BookingDTO = {
   guide_id: string
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function BookingsPage() {
   const { session, user, profile, isLoading } = useAuth()
   const router = useRouter()
@@ -81,7 +83,7 @@ export default function BookingsPage() {
   useEffect(() => {
     if (!isLoading) {
       if (!session) router.push("/login")
-      if (profile && profile.role !== "guide") router.push("/")
+      if (profile && !isSeller(profile.role)) router.push("/")
     }
   }, [isLoading, session, profile, router])
 
@@ -298,7 +300,7 @@ export default function BookingsPage() {
   ]
 
   return (
-    <main className="p-4 lg:p-6 space-y-6">
+    <div className="space-y-6">
           <section className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-semibold">Bookings</h1>
@@ -720,6 +722,6 @@ export default function BookingsPage() {
             </TabsContent>
           </Tabs>
 
-    </main>
+    </div>
   )
 }

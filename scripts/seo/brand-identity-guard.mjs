@@ -1,6 +1,6 @@
-const BRAND_NAME = "TipWalk"
-const CANONICAL_ORIGIN = "https://www.tipwalk.com"
-const CANONICAL_HOST = "www.tipwalk.com"
+const BRAND_NAME = "Touricho"
+const CANONICAL_ORIGIN = "https://www.touricho.com"
+const CANONICAL_HOST = "www.touricho.com"
 const FORBIDDEN_TOKENS = ["touristica", "tourística"]
 
 const DEFAULT_PATHS = [
@@ -65,7 +65,7 @@ async function fetchHtml(url) {
     method: "GET",
     redirect: "follow",
     headers: {
-      "user-agent": "tipwalk-brand-identity-guard/1.0",
+      "user-agent": "touricho-brand-identity-guard/1.0",
     },
     cache: "no-store",
   })

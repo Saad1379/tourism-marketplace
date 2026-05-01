@@ -19,8 +19,8 @@ const contactMethods = [
     icon: Mail,
     title: "Email Us",
     description: "Send us an email anytime",
-    value: "support@tipwalk.com",
-    action: "mailto:support@tipwalk.com",
+    value: "support@touricho.com",
+    action: "mailto:support@touricho.com",
   },
   {
     icon: MessageCircle,

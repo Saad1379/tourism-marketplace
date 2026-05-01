@@ -45,6 +45,8 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function SettingsPage() {
   const router = useRouter()
   const { user, profile, refreshProfile, isLoading: authLoading } = useAuth()
@@ -149,7 +151,7 @@ export default function SettingsPage() {
       return
     }
 
-    if (profile && profile.role !== "guide") {
+    if (profile && !isSeller(profile.role)) {
       router.push("/")
     }
   }, [authLoading, user, profile, router])
@@ -485,15 +487,15 @@ export default function SettingsPage() {
     )
   }
 
-  if (!user || profile?.role !== "guide") {
+  if (!user || !isSeller(profile?.role)) {
     return null
   }
 
   return (
-    <main className="min-h-screen bg-muted/30 p-4 lg:p-6">
+    <div className="max-w-4xl">
           <section className="mb-6">
             <h1 className="text-xl font-semibold">Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your {profile?.role || "user"} account and preferences</p>
+            <p className="text-sm text-muted-foreground">Manage your seller account and preferences</p>
           </section>
 
           <Tabs defaultValue="profile" className="space-y-6">
@@ -1084,7 +1086,7 @@ export default function SettingsPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Appearance</CardTitle>
-                  <CardDescription>Customize how TipWalk looks for you</CardDescription>
+                  <CardDescription>Customize how Touricho looks for you</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
@@ -1112,6 +1114,6 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
           </Tabs>
-    </main>
+    </div>
   )
 }

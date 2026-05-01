@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Traveler Reviews",
   description:
     `Read authentic reviews from 48,000+ travelers who explored cities across Europe with ${BRAND_NAME} guides. Rated 4.8 out of 5 stars across 35+ destinations.`,
-  keywords: ["tipwalk reviews", "walking tour reviews", "traveler testimonials", "guide ratings", "tour feedback"],
+  keywords: ["touricho reviews", "walking tour reviews", "traveler testimonials", "guide ratings", "tour feedback"],
   openGraph: {
     title: withBrandSuffix("Traveler Reviews"),
     description: "Read authentic reviews from 48,000+ travelers. Rated 4.8/5 across 35+ destinations.",

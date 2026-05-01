@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { ensureProfile } from "@/lib/supabase/ensure-profile"
+import { isSeller } from "@/lib/marketplace/roles"
 
 export async function GET() {
   try {
@@ -14,8 +15,8 @@ export async function GET() {
     }
 
     const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can access verification" }, { status: 403 })
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can access verification" }, { status: 403 })
     }
 
     const { data, error } = await supabase
@@ -50,8 +51,8 @@ export async function POST(request: NextRequest) {
     }
 
     const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can submit verification" }, { status: 403 })
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can submit verification" }, { status: 403 })
     }
 
     const body = await request.json()

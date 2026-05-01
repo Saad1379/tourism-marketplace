@@ -7,6 +7,8 @@ import { listTourStops, sanitizeStopNames, syncAndRefreshTourStopContent } from 
 import { DESCRIPTION_MIN_MESSAGE, TOUR_DESCRIPTION_MIN_CHARS } from "@/lib/tours/publish-rules"
 import { type NextRequest, NextResponse } from "next/server"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 async function getFutureScheduleCount(supabase: any, tourId: string): Promise<number> {
   const { count } = await supabase
     .from("tour_schedules")
@@ -37,8 +39,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to access profile" }, { status: 500 })
     }
 
-    if (profile.role && profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can publish tours" }, { status: 403 })
+    if (profile.role && !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can publish tours" }, { status: 403 })
     }
 
     const body = await request.json()

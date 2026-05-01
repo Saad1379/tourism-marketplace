@@ -36,7 +36,7 @@ export function OrganizationStructuredData() {
     logo: `${SITE_URL}/logo.png`,
     description: "Connecting travelers with passionate local guides for free walking tours",
     foundingDate: "2024",
-    sameAs: ["https://twitter.com/tipwalk", "https://facebook.com/tipwalk", "https://instagram.com/tipwalk"],
+    sameAs: ["https://twitter.com/touricho", "https://facebook.com/touricho", "https://instagram.com/touricho"],
   }
 
   if (ORGANIZATION_PHONE) {
@@ -44,7 +44,7 @@ export function OrganizationStructuredData() {
       "@type": "ContactPoint",
       telephone: ORGANIZATION_PHONE,
       contactType: "customer service",
-      email: "support@tipwalk.com",
+      email: "support@touricho.com",
     }
   }
 

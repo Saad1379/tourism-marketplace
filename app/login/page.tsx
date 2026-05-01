@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useMemo, useState } from "react"
+import { isSeller, isBuyer, isAdmin } from "@/lib/marketplace/roles"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ArrowLeft, Eye, EyeOff, Lock, Mail, AlertCircle, Loader2 } from "lucide-react"
@@ -16,7 +17,7 @@ import { createClient } from "@/lib/supabase/client"
 import { signIn as nextAuthSignIn } from "next-auth/react"
 import { trackFunnelEvent } from "@/lib/analytics/ga"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 
 type LoginFieldErrors = {
   email?: string
@@ -128,21 +129,21 @@ export default function LoginPage() {
         .eq("id", probe.user.id)
         .single()
 
-      const role = profile?.role || probe.user?.user_metadata?.role || "tourist"
+      const role = profile?.role || probe.user?.user_metadata?.role || "buyer"
 
       if (
-        role === "guide" &&
+        isSeller(role) &&
         profile?.guide_approval_status === "pending" &&
         profile?.onboarding_completed === true
       ) {
         await supabase.auth.signOut()
-        setError("Your guide application is currently under review. You will receive an email once it has been approved.")
+        setError("Your seller application is currently under review. You will receive an email once it has been approved.")
         setIsLoading(false)
         return
       }
-      if (role === "guide" && profile?.guide_approval_status === "rejected") {
+      if (isSeller(role) && profile?.guide_approval_status === "rejected") {
         await supabase.auth.signOut()
-        setError("Your guide application was not approved. Please contact support for more information.")
+        setError("Your seller application was not approved. Please contact support for more information.")
         setIsLoading(false)
         return
       }
@@ -161,11 +162,11 @@ export default function LoginPage() {
       let redirectUrl: string
       if (redirectTo) {
         redirectUrl = redirectTo
-      } else if (role === "admin") {
+      } else if (isAdmin(role)) {
         redirectUrl = "/admin"
-      } else if (role === "guide" && profile?.onboarding_completed === false) {
+      } else if (isSeller(role) && profile?.onboarding_completed === false) {
         redirectUrl = "/become-guide"
-      } else if (role === "guide") {
+      } else if (isSeller(role)) {
         redirectUrl = "/dashboard"
       } else {
         redirectUrl = "/profile"
@@ -217,22 +218,22 @@ export default function LoginPage() {
         .select("role, guide_approval_status, onboarding_completed")
         .eq("id", data.user.id)
         .single()
-      const role = mfaProfile?.role || data.user?.user_metadata?.role || "tourist"
+      const role = mfaProfile?.role || data.user?.user_metadata?.role || "buyer"
 
       if (
-        role === "guide" &&
+        isSeller(role) &&
         mfaProfile?.guide_approval_status === "pending" &&
         mfaProfile?.onboarding_completed === true
       ) {
         await supabase.auth.signOut()
-        setError("Your guide application is currently under review. You will receive an email once it has been approved.")
+        setError("Your seller application is currently under review. You will receive an email once it has been approved.")
         setIsVerifyingMfa(false)
         return
       }
 
-      if (role === "guide" && mfaProfile?.guide_approval_status === "rejected") {
+      if (isSeller(role) && mfaProfile?.guide_approval_status === "rejected") {
         await supabase.auth.signOut()
-        setError("Your guide application was not approved. Please contact support for more information.")
+        setError("Your seller application was not approved. Please contact support for more information.")
         setIsVerifyingMfa(false)
         return
       }
@@ -240,11 +241,11 @@ export default function LoginPage() {
       let redirectUrl: string
       if (redirectTo) {
         redirectUrl = redirectTo
-      } else if (role === "admin") {
+      } else if (isAdmin(role)) {
         redirectUrl = "/admin"
-      } else if (role === "guide" && mfaProfile?.onboarding_completed === false) {
+      } else if (isSeller(role) && mfaProfile?.onboarding_completed === false) {
         redirectUrl = "/become-guide"
-      } else if (role === "guide") {
+      } else if (isSeller(role)) {
         redirectUrl = "/dashboard"
       } else {
         redirectUrl = "/profile"
@@ -306,9 +307,9 @@ export default function LoginPage() {
       <div className="absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-white/10" />
       <div className="absolute inset-0 bg-background/80 backdrop-blur-[2px]" />
 
-      <div className="relative z-10 w-full max-w-2xl px-4 py-6 lg:py-10 overflow-y-auto lg:overflow-visible">
-        <Link href="/" className="mb-8 flex justify-center" aria-label="TipWalk home">
-          <TipWalkLogo size="md" />
+      <div className="relative z-10 w-full max-w-md px-4 py-6 lg:py-10 overflow-y-auto lg:overflow-visible">
+        <Link href="/" className="mb-8 flex justify-center" aria-label="Touricho home">
+          <TourichoLogo size="md" />
         </Link>
 
         <Card className="border-0 px-5 lg:px-8 shadow-lg bg-background/95 backdrop-blur">
@@ -336,7 +337,7 @@ export default function LoginPage() {
               <Alert className="mb-5 border-yellow-300 bg-yellow-50 text-yellow-900">
                 <AlertCircle className="h-4 w-4 text-yellow-600" />
                 <AlertDescription>
-                  Your guide application is currently under review. You will receive an email once it has been approved.
+                  Your seller application is currently under review. You will receive an email once it has been approved.
                 </AlertDescription>
               </Alert>
             )}

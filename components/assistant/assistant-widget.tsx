@@ -293,8 +293,8 @@ export function AssistantWidget() {
       setOpen(true)
     }
 
-    window.addEventListener("tipwalk:assistant-open", onAssistantOpen)
-    return () => window.removeEventListener("tipwalk:assistant-open", onAssistantOpen)
+    window.addEventListener("touricho:assistant-open", onAssistantOpen)
+    return () => window.removeEventListener("touricho:assistant-open", onAssistantOpen)
   }, [activeMode, resolvedMode])
 
   useEffect(() => {
@@ -483,7 +483,7 @@ export function AssistantWidget() {
                 <SheetDescription className="assistant-description">
                   {activeMode === "guide"
                     ? "Grounded in your dashboard context, tours, and scheduling data."
-                    : "Grounded in tour context and TipWalk FAQ guidance."}
+                    : "Grounded in tour context and Touricho FAQ guidance."}
                 </SheetDescription>
                 <p className="assistant-status-line">
                   <span className="assistant-status-dot" aria-hidden="true" />
@@ -651,7 +651,7 @@ export function AssistantWidget() {
 
               {errorMessage ? <p className="assistant-error-text">{errorMessage}</p> : null}
               {activeMode === "guest" ? (
-                <p className="assistant-footnote">TipWalk assistant gives fast guidance. For final guide confirmation, use Talk to human.</p>
+                <p className="assistant-footnote">Touricho assistant gives fast guidance. For final guide confirmation, use Talk to human.</p>
               ) : null}
             </div>
           </div>

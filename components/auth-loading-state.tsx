@@ -91,7 +91,7 @@ export function AuthLoadingState({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
         <div className="space-y-4 text-center">
           <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">Connecting to TipWalk...</p>
+          <p className="text-muted-foreground">Connecting to Touricho...</p>
           <p className="text-xs text-muted-foreground">Authenticating with Supabase (timeout in 15 seconds)</p>
         </div>
       </div>

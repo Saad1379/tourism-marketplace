@@ -15,10 +15,10 @@ const BANNER_MIN_VISIBLE_DELAY_MS = 900
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (process.env.NODE_ENV === "production") return
   if (payload) {
-    console.info(`[TipWalk Consent] ${message}`, payload)
+    console.info(`[Touricho Consent] ${message}`, payload)
     return
   }
-  console.info(`[TipWalk Consent] ${message}`)
+  console.info(`[Touricho Consent] ${message}`)
 }
 
 export function CookieBanner() {

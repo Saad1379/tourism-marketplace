@@ -1,6 +1,6 @@
-export const BRAND_NAME = "TipWalk"
-export const BRAND_SITE_URL = "https://www.tipwalk.com"
-export const BRAND_SITE_HOST = "www.tipwalk.com"
+export const BRAND_NAME = "Touricho"
+export const BRAND_SITE_URL = "https://www.touricho.com"
+export const BRAND_SITE_HOST = "www.touricho.com"
 export const LEGACY_BRAND_TOKENS = ["touristica", "tourística"] as const
 
 export function withBrandSuffix(value: string): string {

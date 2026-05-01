@@ -18,6 +18,7 @@ import {
   Compass,
   Loader2,
   Bell,
+  Car,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -36,8 +37,9 @@ import { useRealtimeMessageNotifications } from "@/lib/messaging/useRealtimeMess
 import { ThemeToggle } from "@/components/theme-toggle"
 import { buildCityToursPath } from "@/lib/tour-url"
 import { cn } from "@/lib/utils"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 import { useReviewLinkVisibility } from "@/hooks/use-review-link-visibility"
+import { isSeller as checkIsSeller, isBuyer as checkIsBuyer } from "@/lib/marketplace/roles"
 
 type NavbarVariant = "default" | "landingTemplate"
 
@@ -150,7 +152,10 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
       .slice(0, 2)
   }
 
-  const isTourist = profile?.role === "tourist"
+  // Canonical role helpers
+  const isBuyer = checkIsBuyer(profile?.role)
+  const isSeller = checkIsSeller(profile?.role)
+  const isTourist = isBuyer // backward-compat alias used below
   const isTouristAccountRoute =
     pathname === "/profile" ||
     pathname.startsWith("/profile/") ||
@@ -158,7 +163,7 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
     pathname.startsWith("/bookings/") ||
     pathname === "/messages" ||
     pathname.startsWith("/messages/")
-  const showAccountOnlyMobileMenu = Boolean(user && isTourist && isTouristAccountRoute)
+  const showAccountOnlyMobileMenu = Boolean(user && isBuyer && isTouristAccountRoute)
   const isLanding = variant === "landingTemplate"
   const desktopNavButtonClass = isLanding
     ? "text-[color:var(--landing-muted)] hover:text-[color:var(--landing-ink)] hover:bg-[color:var(--landing-accent-soft)]"
@@ -202,6 +207,13 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                       Find Tours
                     </Link>
                     <Link
+                      href="/cars"
+                      className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Rent a Car
+                    </Link>
+                    <Link
                       href="/how-it-works"
                       className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       onClick={() => setMobileMenuOpen(false)}
@@ -238,13 +250,13 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                     >
                       About Us
                     </Link>
-                    {(!user || profile?.role === "tourist") && (
+                    {(!user || isBuyer) && (
                       <Link
                         href="/become-guide"
                         className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        Want to be a guide?
+                        List your services
                       </Link>
                     )}
                   </>
@@ -274,7 +286,7 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                           <p className="text-sm text-muted-foreground">{profile.email}</p>
                         </div>
                       </div>
-                      {profile.role === "guide" ? (
+                      {isSeller ? (
                         <>
                           <Link
                             href="/dashboard"
@@ -289,6 +301,13 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                             onClick={() => setMobileMenuOpen(false)}
                           >
                             My Tours
+                          </Link>
+                          <Link
+                            href="/dashboard/cars"
+                            className="block rounded-lg px-3 py-2.5 text-base font-medium text-foreground hover:bg-muted"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            My Cars
                           </Link>
                           <Link
                             href="/dashboard/bookings"
@@ -400,8 +419,8 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
       >
         <nav className={cn("mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8", isLanding && "relative")}>
         {/* Logo */}
-        <Link href="/" aria-label="TipWalk home">
-          <TipWalkLogo
+        <Link href="/" aria-label="Touricho home">
+          <TourichoLogo
             size="md"
             markClassName={cn(isLanding && "shadow-[0_6px_16px_rgba(224,92,58,0.3)]")}
             textClassName={cn(isLanding ? "text-[color:var(--landing-ink)]" : "text-foreground")}
@@ -438,6 +457,9 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
             <Link href="/tours">Find Tours</Link>
           </Button>
           <Button variant="ghost" asChild className={desktopNavButtonClass}>
+            <Link href="/cars">Rent a Car</Link>
+          </Button>
+          <Button variant="ghost" asChild className={desktopNavButtonClass}>
             <Link href="/how-it-works">How It Works</Link>
           </Button>
           <Button variant="ghost" asChild className={desktopNavButtonClass}>
@@ -462,12 +484,12 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
             </div>
           ) : user && profile ? (
             <>
-              {profile.role === "tourist" && (
+              {isBuyer && (
                 <Link
                   href="/become-guide"
                   className={auxLinkClass}
                 >
-                  Want to be a guide?
+                  List your services
                 </Link>
               )}
               <Button variant="ghost" size="icon" className="relative" asChild aria-label="Open messages">
@@ -505,7 +527,7 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  {profile.role === "guide" ? (
+                  {isSeller ? (
                     <>
                       <DropdownMenuItem asChild>
                         <Link href="/dashboard" className="cursor-pointer">
@@ -517,6 +539,12 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                         <Link href="/dashboard/tours" className="cursor-pointer">
                           <Compass className="mr-2 h-4 w-4" />
                           My Tours
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/dashboard/cars" className="cursor-pointer">
+                          <Car className="mr-2 h-4 w-4" />
+                          My Cars
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
@@ -582,7 +610,7 @@ export function Navbar({ variant = "default" }: NavbarProps = {}) {
                 href="/become-guide"
                 className={auxLinkClass}
               >
-                Want to be a guide?
+                List your services
               </Link>
               <Link
                 href="/login"

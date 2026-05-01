@@ -108,6 +108,8 @@ async function createOrLoadConversation(input: {
   return String(inserted.id)
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as AssistantHandoffRequestBody
@@ -127,8 +129,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       }
       const { data: profile } = await authClient.from("profiles").select("role").eq("id", user.id).single()
-      if (profile?.role !== "guide") {
-        return NextResponse.json({ error: "Guide access required" }, { status: 403 })
+      if (profile && !isSeller(profile.role)) {
+        return NextResponse.json({ error: "Seller access required" }, { status: 403 })
       }
 
       const payload: AssistantHandoffResponseBody = { redirectUrl: "/dashboard/messages" }

@@ -3,10 +3,10 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "TipWalk's privacy policy explains how we collect, use, and protect your personal data in compliance with GDPR, CCPA, and CNIL regulations.",
+    "Touricho's privacy policy explains how we collect, use, and protect your personal data in compliance with GDPR, CCPA, and CNIL regulations.",
   openGraph: {
-    title: "Privacy Policy | TipWalk",
-    description: "How TipWalk collects, uses, and protects your personal data.",
+    title: "Privacy Policy | Touricho",
+    description: "How Touricho collects, uses, and protects your personal data.",
     url: "/privacy",
     type: "website",
   },
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">1. Cookie Consent</h2>
           <p className="text-foreground/80 mb-4">
-            TipWalk uses Google Analytics to measure site performance and user behavior. All analytics cookies are
+            Touricho uses Google Analytics to measure site performance and user behavior. All analytics cookies are
             disabled by default until you explicitly consent through our cookie banner.
           </p>
           <p className="text-foreground/80">
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">2. Google Analytics</h2>
           <p className="text-foreground/80 mb-4">
-            We use Google Analytics 4 (GA4) to understand how visitors use TipWalk. GA4 collects:
+            We use Google Analytics 4 (GA4) to understand how visitors use Touricho. GA4 collects:
           </p>
           <ul className="list-disc pl-6 text-foreground/80 mb-4">
             <li>Page views and user journeys</li>
@@ -57,7 +57,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2 className="text-2xl font-semibold mb-4">4. Contact</h2>
-          <p className="text-foreground/80">For privacy inquiries, please contact us at privacy@tipwalk.com</p>
+          <p className="text-foreground/80">For privacy inquiries, please contact us at privacy@touricho.com</p>
         </section>
       </div>
     </div>

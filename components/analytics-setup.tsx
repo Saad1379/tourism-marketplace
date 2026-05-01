@@ -12,10 +12,10 @@ import { useAuth } from "@/lib/supabase/auth-context"
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (process.env.NODE_ENV === "production") return
   if (payload) {
-    console.info(`[TipWalk Analytics Setup] ${message}`, payload)
+    console.info(`[Touricho Analytics Setup] ${message}`, payload)
     return
   }
-  console.info(`[TipWalk Analytics Setup] ${message}`)
+  console.info(`[Touricho Analytics Setup] ${message}`)
 }
 
 /**

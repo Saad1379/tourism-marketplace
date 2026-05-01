@@ -8,17 +8,17 @@ import { ReviewsClient, type PublicReviewItem } from "./reviews-client"
 export const metadata: Metadata = {
   title: "Reviews",
   description:
-    "Read verified traveler reviews from real TipWalk bookings. Explore honest feedback about local guides, cities, and tour experiences.",
+    "Read verified traveler reviews from real Touricho bookings. Explore honest feedback about local guides, cities, and tour experiences.",
   keywords: [
     "walking tour reviews",
     "verified traveler reviews",
     "local guide ratings",
-    "tipwalk reviews",
+    "touricho reviews",
     "city tour feedback",
   ],
   openGraph: {
-    title: "Reviews | TipWalk",
-    description: "Verified traveler feedback from real TipWalk bookings.",
+    title: "Reviews | Touricho",
+    description: "Verified traveler feedback from real Touricho bookings.",
     url: "/reviews",
     type: "website",
   },

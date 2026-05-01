@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -48,8 +48,8 @@ export default function ForgotPasswordPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-(--landing-bg-soft) px-5 py-12">
         <div className="w-full max-w-md">
-          <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
-            <TipWalkLogo size="lg" />
+          <Link href="/" className="mb-6 flex justify-center" aria-label="Touricho home">
+            <TourichoLogo size="lg" />
           </Link>
 
           <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
@@ -83,8 +83,8 @@ export default function ForgotPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-(--landing-bg-soft) px-5 py-12">
       <div className="w-full max-w-md">
-        <Link href="/" className="mb-6 flex justify-center" aria-label="TipWalk home">
-          <TipWalkLogo size="lg" />
+        <Link href="/" className="mb-6 flex justify-center" aria-label="Touricho home">
+          <TourichoLogo size="lg" />
         </Link>
 
         <Card className="border-border bg-background shadow-[0_10px_24px_rgba(15,23,42,0.06)]">

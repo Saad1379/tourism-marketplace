@@ -10,7 +10,11 @@ export interface Profile {
   email: string
   full_name: string | null
   avatar_url: string | null
-  role: "tourist" | "guide"
+  /**
+   * Canonical values: "buyer" | "seller" | "admin"
+   * Legacy values (backward compat): "tourist" | "guide"
+   */
+  role: "tourist" | "guide" | "buyer" | "seller" | "admin"
   phone: string | null
   bio: string | null
   languages: string[]
@@ -123,7 +127,7 @@ export async function bootstrapAuth(supabase: SupabaseClient, timeoutMs = 15000)
             console.error("[v0] Failed to fix role in profile:", fixError.message)
           } else {
             console.log("[v0] Fixed profile role to:", userRole)
-            profile.role = userRole as "tourist" | "guide"
+            profile.role = userRole as "tourist" | "guide" | "buyer" | "seller"
           }
         }
       }

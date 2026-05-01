@@ -5,8 +5,8 @@ import { BRAND_NAME, toCanonicalUrl, withBrandSuffix } from "@/lib/seo/brand"
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
   description:
-    "Find answers to common questions about booking free walking tours, becoming a guide, credits, payments, and more on TipWalk.",
-  keywords: ["tipwalk FAQ", "walking tour questions", "how to book a tour", "become a guide FAQ", "tipwalk credits help"],
+    "Find answers to common questions about booking free walking tours, becoming a guide, credits, payments, and more on Touricho.",
+  keywords: ["touricho FAQ", "walking tour questions", "how to book a tour", "become a guide FAQ", "touricho credits help"],
   openGraph: {
     title: withBrandSuffix("Frequently Asked Questions"),
     description: "Find answers to common questions about booking tours, becoming a guide, payments, and more.",
@@ -68,7 +68,7 @@ const faqJsonLd = {
     },
     {
       "@type": "Question",
-      name: "How do I become a guide on TipWalk?",
+      name: "How do I become a guide on Touricho?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Click 'Become a Guide' and complete our registration process. You'll provide information about yourself, your experience, and create your first tour. Once approved, your tour will be live and you can start accepting bookings.",

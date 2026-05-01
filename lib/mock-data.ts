@@ -1084,7 +1084,7 @@ export const faqCategories = [
     name: "For Guides",
     faqs: [
       {
-        question: "How do I become a guide on TipWalk?",
+        question: "How do I become a guide on Touricho?",
         answer:
           "Simply click 'Become a Guide' and complete our registration process. You'll provide information about yourself, your experience, and create your first tour. Once approved, your tour will be live and you can start accepting bookings!",
       },
@@ -1157,7 +1157,7 @@ export const teamMembers = [
     name: "Carlos Rodriguez",
     role: "Co-Founder & CEO",
     image: "/professional-hispanic-man-portrait.jpg",
-    bio: "Former tour guide turned entrepreneur. Carlos founded TipWalk after 10 years of leading tours across Europe.",
+    bio: "Former tour guide turned entrepreneur. Carlos founded Touricho after 10 years of leading tours across Europe.",
   },
   {
     name: "Elena Kowalski",

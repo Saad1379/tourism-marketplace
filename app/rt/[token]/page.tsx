@@ -6,8 +6,8 @@ type PageProps = {
 }
 
 export const metadata: Metadata = {
-  title: "Leave a Tour Review | TipWalk",
-  description: "Share your experience with your local guide on TipWalk.",
+  title: "Leave a Tour Review | Touricho",
+  description: "Share your experience with your local guide on Touricho.",
   robots: { index: false, follow: false },
 }
 

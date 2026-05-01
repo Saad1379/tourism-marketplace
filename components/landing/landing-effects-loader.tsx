@@ -4,7 +4,7 @@ import { useEffect } from "react"
 import { usePathname } from "next/navigation"
 
 const EFFECTS_STYLESHEET_HREF = "/landing-effects.css"
-const EFFECTS_STYLESHEET_ATTR = "data-tipwalk-landing-effects"
+const EFFECTS_STYLESHEET_ATTR = "data-touricho-landing-effects"
 const EFFECTS_LOAD_TIMEOUT_MS = 1400
 const EFFECTS_MIN_DELAY_MS = 900
 
@@ -13,10 +13,10 @@ const PROTECTED_PREFIXES = ["/dashboard", "/profile", "/bookings", "/messages", 
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (process.env.NODE_ENV === "production") return
   if (payload) {
-    console.info(`[TipWalk Styles] ${message}`, payload)
+    console.info(`[Touricho Styles] ${message}`, payload)
     return
   }
-  console.info(`[TipWalk Styles] ${message}`)
+  console.info(`[Touricho Styles] ${message}`)
 }
 
 function isPublicRoute(pathname: string | null) {

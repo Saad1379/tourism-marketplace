@@ -27,7 +27,7 @@ import { getStorageUrl } from "@/lib/utils"
 export const metadata: Metadata = {
   title: "How It Works",
   description:
-    "Discover how TipWalk works for travelers and guides. Book for free, meet your guide, and tip after your experience.",
+    "Discover how Touricho works for travelers and guides. Book for free, meet your guide, and tip after your experience.",
   keywords: [
     "how free walking tours work",
     "book a walking tour",
@@ -181,7 +181,7 @@ export default async function HowItWorksPage() {
 
       <section className="public-hero-section py-16 lg:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="public-template-heading text-4xl font-bold tracking-tight lg:text-5xl">How TipWalk Works</h1>
+          <h1 className="public-template-heading text-4xl font-bold tracking-tight lg:text-5xl">How Touricho Works</h1>
           <p className="public-template-copy mt-4 max-w-2xl mx-auto text-lg">
             Real tours, real local guides, and a booking flow designed around value-first travel.
           </p>
@@ -189,7 +189,7 @@ export default async function HowItWorksPage() {
             Tours are designed to run with small groups, so travelers can book with confidence.
           </p>
           <p className="mt-3 max-w-2xl mx-auto text-sm text-[color:var(--landing-muted)]">
-            Guides marked <span className="font-semibold text-[color:var(--landing-ink)]">PRO</span> use TipWalk&apos;s paid plan and added tools.
+            Guides marked <span className="font-semibold text-[color:var(--landing-ink)]">PRO</span> use Touricho&apos;s paid plan and added tools.
             The badge is a plan signal, not a quality guarantee by itself.
           </p>
         </div>
@@ -299,7 +299,7 @@ export default async function HowItWorksPage() {
       <section className="public-section-soft py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="public-template-heading text-3xl font-bold">Why Choose TipWalk?</h2>
+            <h2 className="public-template-heading text-3xl font-bold">Why Choose Touricho?</h2>
             <p className="public-template-copy mt-4">Built for trust, flexibility, and city-level authenticity.</p>
           </div>
 

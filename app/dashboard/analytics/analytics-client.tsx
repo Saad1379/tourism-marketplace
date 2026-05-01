@@ -45,6 +45,8 @@ type TopTour = {
   rating: number
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function AnalyticsClient() {
   const router = useRouter()
   const { user, profile, isLoading: authLoading } = useAuth()
@@ -68,7 +70,7 @@ export default function AnalyticsClient() {
       return
     }
 
-    if (profile && profile.role !== "guide") {
+    if (profile && !isSeller(profile.role)) {
       router.push("/")
     }
   }, [authLoading, user, profile, router])
@@ -83,7 +85,7 @@ export default function AnalyticsClient() {
   )
 
   useEffect(() => {
-    if (!user || profile?.role !== "guide") return
+    if (!user || !isSeller(profile?.role)) return
 
     const fetchAnalytics = async () => {
       try {
@@ -116,7 +118,7 @@ export default function AnalyticsClient() {
     )
   }
 
-  if (!user || profile?.role !== "guide") {
+  if (!user || !isSeller(profile?.role)) {
     return null
   }
 
@@ -126,7 +128,7 @@ export default function AnalyticsClient() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
             <Badge variant="secondary" className="mb-2">Last 7 days</Badge>
-            <h2 className="text-2xl font-bold tracking-tight text-foreground">Guide Analytics</h2>
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">Seller Analytics</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Understand booking momentum, attendance quality, and revenue trends.
             </p>

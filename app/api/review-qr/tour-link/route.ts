@@ -201,6 +201,8 @@ async function getOrCreateTourLinkFallback(
   return { ok: false, status: 500, error: "Unable to process request right now." }
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -213,8 +215,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
-    if (profile?.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can access tour QR links." }, { status: 403 })
+    if (profile && !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can access tour QR links." }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))

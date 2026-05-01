@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test"
 import { login } from "./helpers/login"
 
-const BASE_URL = process.env.BASE_URL || "https://tipwalk.vercel.app"
+const BASE_URL = process.env.BASE_URL || "https://touricho.vercel.app"
 
 test.describe("Guide Tour Creation Smoke Tests", () => {
   test("smoke: Tour creation page loads with 6-step wizard", async ({ page }) => {

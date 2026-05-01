@@ -9,8 +9,8 @@ import { buildCityToursPath } from "@/lib/tour-url"
 export function buildNoindexCityMetadata(city: string, slug: string): Metadata {
   const cityLabel = city.trim()
   return {
-    title: `${cityLabel} Tours Coming Soon | TipWalk`,
-    description: `TipWalk is preparing free walking tours in ${cityLabel}. Explore current tours in Paris while we launch this destination.`,
+    title: `${cityLabel} Tours Coming Soon | Touricho`,
+    description: `Touricho is preparing free walking tours in ${cityLabel}. Explore current tours in Paris while we launch this destination.`,
     robots: {
       index: false,
       follow: false,
@@ -34,7 +34,7 @@ export function NoindexCityPage({ city }: { city: string }) {
           <p className="landing-template-label">Coming Soon</p>
           <h1 className="landing-template-heading mt-3 text-3xl sm:text-4xl">Free walking tours in {city} are launching soon.</h1>
           <p className="landing-template-copy mt-4 text-base leading-8 sm:text-lg">
-            TipWalk is currently focused on Paris. Browse available Paris tours now and reserve for free in under 60 seconds.
+            Touricho is currently focused on Paris. Browse available Paris tours now and reserve for free in under 60 seconds.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Button asChild className="landing-btn-coral">

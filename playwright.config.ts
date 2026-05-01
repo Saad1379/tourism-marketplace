@@ -12,7 +12,7 @@ export default defineConfig({
   },
   reporter: "html",
   use: {
-    baseURL: process.env.BASE_URL || "https://v0-tipwalk-tours-9sn1qu4m4-joseph-jeries-projects.vercel.app",
+    baseURL: process.env.BASE_URL || "https://v0-touricho-tours-9sn1qu4m4-joseph-jeries-projects.vercel.app",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",

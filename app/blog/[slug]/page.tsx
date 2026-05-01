@@ -112,7 +112,7 @@ function buildDescription(post: BlogPostRow): string {
   const fromMarkdown = stripMarkdown(post.content_markdown || "")
   if (fromMarkdown) return fromMarkdown.slice(0, 160)
 
-  return "TipWalk blog article."
+  return "Touricho blog article."
 }
 
 function sanitizeHtml(input: string): string {
@@ -246,8 +246,8 @@ function resolveFaqItems(post: BlogPostRow): FaqItem[] {
 
 function normalizeSeoTitle(value: string): string {
   const trimmed = String(value || "").trim()
-  if (!trimmed) return "TipWalk Article"
-  return trimmed.replace(/(\s*\|\s*TipWalk)+\s*$/i, "").trim() || trimmed
+  if (!trimmed) return "Touricho Article"
+  return trimmed.replace(/(\s*\|\s*Touricho)+\s*$/i, "").trim() || trimmed
 }
 
 function resolvePriorityAuthor(slug: string): BlogAuthor | null {
@@ -267,7 +267,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!post) {
     return {
-      title: { absolute: "Article Not Found | TipWalk" },
+      title: { absolute: "Article Not Found | Touricho" },
       robots: { index: false, follow: false },
     }
   }
@@ -335,7 +335,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       : undefined,
     publisher: {
       "@type": "Organization",
-      name: "TipWalk",
+      name: "Touricho",
       url: siteUrl,
     },
   }

@@ -7,7 +7,12 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      role: "tourist" | "guide" | "admin" | null;
+      /**
+       * Canonical role values are "buyer" and "seller".
+       * "tourist" and "guide" are legacy synonyms kept for backward compatibility.
+       * Use normalizeRole() from lib/marketplace/roles.ts in application logic.
+       */
+      role: "buyer" | "seller" | "tourist" | "guide" | "admin" | null;
       supabaseAccessToken?: string | null;
       supabaseRefreshToken?: string | null;
     } & DefaultSession["user"];
@@ -15,7 +20,7 @@ declare module "next-auth" {
 
   interface User {
     id: string;
-    role?: "tourist" | "guide" | "admin" | null;
+    role?: "buyer" | "seller" | "tourist" | "guide" | "admin" | null;
     supabaseAccessToken?: string | null;
     supabaseRefreshToken?: string | null;
   }
@@ -87,12 +92,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .single();
 
         const role =
-          (profile?.role as "tourist" | "guide" | "admin" | null) ?? "tourist";
+          (profile?.role as "buyer" | "seller" | "tourist" | "guide" | "admin" | null) ?? "buyer";
 
-        if (role === "guide" && profile?.guide_approval_status === "pending") {
+        // Accept both old (guide) and new (seller) role names for approval gate
+        if ((role === "guide" || role === "seller") && profile?.guide_approval_status === "pending") {
           throw new Error("GUIDE_PENDING");
         }
-        if (role === "guide" && profile?.guide_approval_status === "rejected") {
+        if ((role === "guide" || role === "seller") && profile?.guide_approval_status === "rejected") {
           throw new Error("GUIDE_REJECTED");
         }
 
@@ -151,19 +157,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           .single()
 
         const role =
-          (profile?.role as "tourist" | "guide" | "admin" | null) ?? "tourist"
+          (profile?.role as "buyer" | "seller" | "tourist" | "guide" | "admin" | null) ?? "buyer"
 
-        // Only block when the guide has already submitted onboarding — i.e.
+        // Only block when the seller/guide has already submitted onboarding — i.e.
         // the review queue is actually active for them. A fresh OAuth signup
         // has status NULL and must flow through to /become-guide.
         if (
-          role === "guide" &&
+          (role === "guide" || role === "seller") &&
           profile?.guide_approval_status === "pending" &&
           profile?.onboarding_completed === true
         ) {
           throw new Error("GUIDE_PENDING")
         }
-        if (role === "guide" && profile?.guide_approval_status === "rejected") {
+        if ((role === "guide" || role === "seller") && profile?.guide_approval_status === "rejected") {
           throw new Error("GUIDE_REJECTED")
         }
 
@@ -190,7 +196,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role ?? "tourist";
+        token.role = user.role ?? "buyer";
         token.supabaseAccessToken = user.supabaseAccessToken ?? null;
         token.supabaseRefreshToken = user.supabaseRefreshToken ?? null;
       }
@@ -203,7 +209,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token && session.user) {
         session.user.id = (token.id as string) ?? session.user.id;
         session.user.role =
-          (token.role as "tourist" | "guide" | "admin" | null) ?? "tourist";
+          (token.role as "buyer" | "seller" | "tourist" | "guide" | "admin" | null) ?? "buyer";
         session.user.supabaseAccessToken =
           (token.supabaseAccessToken as string | null) ?? null;
         session.user.supabaseRefreshToken =

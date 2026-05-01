@@ -1053,7 +1053,7 @@ export default function ProfileSettingsPage() {
                     <Palette className="h-5 w-5" />
                     Appearance
                   </CardTitle>
-                  <CardDescription>Customize how TipWalk looks for you</CardDescription>
+                  <CardDescription>Customize how Touricho looks for you</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">

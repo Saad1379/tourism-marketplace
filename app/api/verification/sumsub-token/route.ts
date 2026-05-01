@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { ensureProfile } from "@/lib/supabase/ensure-profile"
 import crypto from "crypto"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 const SUMSUB_APP_TOKEN = process.env.SAMSUB_ACCESS_TOKEN!
 const SUMSUB_SECRET_KEY = process.env.SAMSUB_SECRET_KEY!
 const SUMSUB_BASE_URL = "https://api.sumsub.com"
@@ -25,8 +27,8 @@ export async function POST() {
     }
 
     const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can access verification" }, { status: 403 })
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can access verification" }, { status: 403 })
     }
 
     const ts = Math.floor(Date.now() / 1000)

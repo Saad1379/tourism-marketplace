@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 import { getSupabaseEnv } from "./env"
+import { isSeller } from "@/lib/marketplace/roles"
 
 let hasWarnedMissingEnv = false
 
@@ -111,9 +112,9 @@ export async function updateSession(request: NextRequest) {
         .single()
 
       if (
-        guideProfile?.role === "guide" &&
-        guideProfile.guide_approval_status !== "approved" &&
-        guideProfile.guide_approval_status != null
+        isSeller(guideProfile?.role) &&
+        guideProfile?.guide_approval_status !== "approved" &&
+        guideProfile?.guide_approval_status != null
       ) {
         // Sign them out and redirect to login with a message
         return NextResponse.redirect(new URL("/login?guide_pending=1", request.url))
@@ -128,8 +129,8 @@ export async function updateSession(request: NextRequest) {
   if (isAuthPath && user && !requiresMfa) {
     const url = request.nextUrl.clone()
     // Check user role and redirect accordingly
-    const role = user.user_metadata?.role || "tourist"
-    url.pathname = role === "guide" ? "/dashboard" : "/profile"
+    const role = user.user_metadata?.role
+    url.pathname = isSeller(role) ? "/dashboard" : "/profile"
     return NextResponse.redirect(url)
   }
 

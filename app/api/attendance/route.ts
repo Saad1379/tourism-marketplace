@@ -1,7 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
 import { ensureProfile } from "@/lib/supabase/ensure-profile"
+import { isSeller } from "@/lib/marketplace/roles"
 
+/**
+ * POST /api/attendance
+ *
+ * Mark attendance for a completed booking slot.
+ * Only the seller (guide) who owns the resource can mark attendance.
+ *
+ * REFACTOR: Replaced hardcoded `profile.role !== "guide"` with the generic
+ * `isSeller()` helper so this route works for both old ("guide") and new
+ * ("seller") role values.
+ */
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -13,9 +24,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can mark attendance" }, { status: 403 })
+    const profile = await ensureProfile(supabase, user as any)
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can mark attendance" }, { status: 403 })
     }
 
     const body = await request.json()
@@ -37,6 +48,9 @@ export async function POST(request: NextRequest) {
           adults,
           children,
           status,
+          resource_type,
+          resource_id,
+          resource_schedule_id,
           schedule:tour_schedules(
             id,
             tour:tours(id, guide_id)
@@ -50,9 +64,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 })
     }
 
-    const guideId = booking.schedule?.tour?.guide_id
-    if (guideId !== user.id) {
-      return NextResponse.json({ error: "You can only mark attendance for your own tours" }, { status: 403 })
+    // Verify that the current user is the seller for this booking's resource
+    let isOwner = false
+
+    if (booking.resource_type === "tour") {
+      const guideId = (booking.schedule as any)?.tour?.guide_id
+      isOwner = guideId === user.id
+    } else if (booking.resource_type === "car") {
+      const { data: car } = await supabase
+        .from("cars")
+        .select("seller_id")
+        .eq("id", booking.resource_id)
+        .single()
+      isOwner = car?.seller_id === user.id
+    }
+
+    if (!isOwner) {
+      return NextResponse.json(
+        { error: "You can only mark attendance for your own listings" },
+        { status: 403 },
+      )
     }
 
     const maxAdults = booking.adults ?? 0
@@ -66,7 +97,7 @@ export async function POST(request: NextRequest) {
       .from("attendance")
       .insert({
         booking_id,
-        guide_id: user.id,
+        guide_id: user.id, // kept as guide_id for DB backward compat
         adults_attended,
         children_attended,
         attended: true,
@@ -86,34 +117,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: bookingUpdateError.message }, { status: 400 })
     }
 
-    // Finalize held credits
-    const { error: finalizeError } = await supabase.rpc('finalize_credits_on_attendance', {
-      p_booking_id: booking_id
-    })
+    // Finalize held credits (tour-only side effect)
+    if (booking.resource_type === "tour") {
+      const { error: finalizeError } = await supabase.rpc("finalize_credits_on_attendance", {
+        p_booking_id: booking_id,
+      })
 
-    if (finalizeError) {
-      console.error('[v0] Error finalizing credits:', finalizeError)
+      if (finalizeError) {
+        console.error("[v0] Error finalizing credits:", finalizeError)
+      }
     }
 
+    // Auto-open QR review session for tours
     let reviewQrSessionOpened = false
-    try {
-      const scheduleId = booking.schedule?.id
-      if (scheduleId) {
-        const serviceSupabase = createServiceRoleClient()
-        const { error: qrSessionError } = await serviceSupabase.rpc("create_review_qr_session", {
-          p_schedule_id: scheduleId,
-          p_guide_id: user.id,
-          p_ttl_minutes: 180,
-        })
+    if (booking.resource_type === "tour") {
+      try {
+        const scheduleId =
+          booking.resource_schedule_id ?? (booking.schedule as any)?.id
+        if (scheduleId) {
+          const serviceSupabase = createServiceRoleClient()
+          const { error: qrSessionError } = await serviceSupabase.rpc(
+            "create_review_qr_session",
+            {
+              p_schedule_id: scheduleId,
+              p_guide_id: user.id,
+              p_ttl_minutes: 180,
+            },
+          )
 
-        if (qrSessionError) {
-          console.warn("[v0] Attendance marked but QR session auto-open failed:", qrSessionError.message)
-        } else {
-          reviewQrSessionOpened = true
+          if (qrSessionError) {
+            console.warn(
+              "[v0] Attendance marked but QR session auto-open failed:",
+              qrSessionError.message,
+            )
+          } else {
+            reviewQrSessionOpened = true
+          }
         }
+      } catch (qrError) {
+        console.warn("[v0] Attendance marked but QR session auto-open exception:", qrError)
       }
-    } catch (qrError) {
-      console.warn("[v0] Attendance marked but QR session auto-open exception:", qrError)
     }
 
     return NextResponse.json({ success: true, reviewQrSessionOpened })

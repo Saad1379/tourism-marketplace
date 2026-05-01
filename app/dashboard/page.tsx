@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/supabase/auth-context"
 import Link from "next/link"
-import { Calendar, Users, Zap, Map, Star, Plus, BarChart3 } from "lucide-react"
+import { Calendar, Users, Zap, Map, Star, Plus, BarChart3, Car } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { LoadingSpinner } from "@/components/loading-spinner"
@@ -12,11 +12,14 @@ import { StatCard } from "@/components/shared/stat-card"
 import { BookingCard } from "@/components/shared/booking-card"
 import { EmptyState } from "@/components/shared/empty-state"
 
-export default function GuideDashboard() {
+import { isSeller } from "@/lib/marketplace/roles"
+
+export default function SellerDashboard() {
   const router = useRouter()
   const { user, session, profile, isLoading } = useAuth()
   const [bookings, setBookings] = useState<any[]>([])
   const [tours, setTours] = useState<any[]>([])
+  const [cars, setCars] = useState<any[]>([])
   const [reviews, setReviews] = useState<any[]>([])
   const [credits, setCredits] = useState<any>(null)
   const [dataLoading, setDataLoading] = useState(true)
@@ -28,7 +31,7 @@ export default function GuideDashboard() {
   }, [isLoading, session, router])
 
   useEffect(() => {
-    if (!isLoading && profile && profile.role !== "guide") router.push("/")
+    if (!isLoading && profile && !isSeller(profile.role)) router.push("/")
   }, [isLoading, profile, router])
 
   // Create pending tour from localStorage (non-blocking)
@@ -47,7 +50,7 @@ export default function GuideDashboard() {
         })
         if (response.ok) {
           localStorage.removeItem("pendingTour")
-          const toursRes = await fetch("/api/tours?role=guide", {
+          const toursRes = await fetch("/api/tours?role=seller", {
             headers: { Authorization: `Bearer ${session.access_token}` },
           })
           if (toursRes.ok) {
@@ -69,11 +72,12 @@ export default function GuideDashboard() {
       try {
         setDataLoading(true)
         const headers = { Authorization: `Bearer ${session.access_token}` }
-        const [bookingsRes, toursRes, creditsRes, reviewsRes] = await Promise.all([
-          fetch("/api/bookings?role=guide", { headers }),
-          fetch("/api/tours?role=guide", { headers }),
+        const [bookingsRes, toursRes, creditsRes, reviewsRes, carsRes] = await Promise.all([
+          fetch("/api/bookings?role=seller", { headers }),
+          fetch("/api/tours?role=seller", { headers }),
           fetch("/api/credits", { headers }),
           fetch("/api/reviews", { headers }),
+          fetch("/api/cars?include_own=true", { headers }),
         ])
 
         if (bookingsRes.ok) {
@@ -101,6 +105,10 @@ export default function GuideDashboard() {
           const data = await creditsRes.json()
           setCredits(data)
         }
+        if (carsRes.ok) {
+          const data = await carsRes.json()
+          setCars(Array.isArray(data) ? data : [])
+        }
         if (reviewsRes.ok) {
           const data = await reviewsRes.json()
           setReviews(Array.isArray(data) ? data.slice(0, 5) : [])
@@ -123,9 +131,13 @@ export default function GuideDashboard() {
     )
   }
 
-  if (!session || !profile || profile.role !== "guide") return null
+  if (!session || !profile || !isSeller(profile.role)) return null
 
   const publishedTours = tours.filter((t: any) => t.status === "published").length
+  const draftTours = tours.filter((t: any) => t.status === "draft").length
+  const publishedCars = cars.filter((c: any) => c.status === "published").length
+  const draftCars = cars.filter((c: any) => c.status === "draft").length
+  
   const now = Date.now()
   const upcomingBookings = bookings.filter((booking: any) => {
     const timestamp = booking.start_time ? new Date(booking.start_time).getTime() : 0
@@ -135,7 +147,7 @@ export default function GuideDashboard() {
   const visibleBookings = upcomingBookings.slice(0, 3)
 
   return (
-    <main className="mx-auto max-w-7xl space-y-8 p-6 lg:p-8">
+    <div className="space-y-8">
       {error && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive">
           {error}
@@ -145,10 +157,11 @@ export default function GuideDashboard() {
       {/* KPI Stats */}
       <section>
         <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground/60 mb-4">At a glance</p>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard label="Active Tours"     value={publishedTours}          icon={Map}      variant="primary" />
-          <StatCard label="Upcoming Bookings" value={upcomingBookings.length} icon={Calendar} variant="secondary" />
-          <StatCard label="Total Guests"     value={totalGuests}             icon={Users}    variant="accent" />
+          <StatCard label="Active Cars"      value={publishedCars}           icon={Car}      variant="secondary" />
+          <StatCard label="Drafts (Total)"   value={draftTours + draftCars}  icon={Plus}     variant="accent" />
+          <StatCard label="Total Guests"     value={totalGuests}             icon={Users}    variant="primary" />
           <StatCard label="Credits Balance"  value={credits?.balance ?? 0}  icon={Zap}      variant="primary" />
         </div>
       </section>
@@ -272,6 +285,6 @@ export default function GuideDashboard() {
           </CardContent>
         </Card>
       </div>
-    </main>
+    </div>
   )
 }

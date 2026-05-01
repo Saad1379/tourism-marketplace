@@ -6,14 +6,14 @@ import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
 
 export const metadata: Metadata = {
-  title: "Guide Resources | TipWalk",
-  description: "Best practices and onboarding resources for TipWalk guides.",
+  title: "Guide Resources | Touricho",
+  description: "Best practices and onboarding resources for Touricho guides.",
   alternates: {
     canonical: "/guide-resources",
   },
   openGraph: {
-    title: "Guide Resources | TipWalk",
-    description: "Best practices and onboarding resources for TipWalk guides.",
+    title: "Guide Resources | Touricho",
+    description: "Best practices and onboarding resources for Touricho guides.",
     url: "/guide-resources",
     type: "website",
   },

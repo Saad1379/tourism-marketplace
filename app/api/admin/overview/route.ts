@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { createServiceRoleClient } from "@/lib/supabase/server"
+import { isSeller, isBuyer, isAdmin } from "@/lib/marketplace/roles"
 
 async function verifyAdmin() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: "Unauthorized", status: 401, user: null, supabase: null }
   const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-  if (profile?.role !== "admin") return { error: "Admin access required", status: 403, user: null, supabase: null }
+  if (!isAdmin(profile?.role)) return { error: "Admin access required", status: 403, user: null, supabase: null }
   return { error: null, status: 200, user, supabase }
 }
 
@@ -39,8 +40,8 @@ export async function GET(_request: NextRequest) {
 
     // KPI counts
     const totalUsers = profiles.length
-    const totalGuides = profiles.filter((p) => p.role === "guide").length
-    const totalTourists = profiles.filter((p) => p.role === "tourist").length
+    const totalGuides = profiles.filter((p) => isSeller(p.role)).length
+    const totalTourists = profiles.filter((p) => isBuyer(p.role)).length
     const totalTours = tours.length
     const activeTours = tours.filter((t) => t.status === "published").length
     const totalBookings = bookings.length

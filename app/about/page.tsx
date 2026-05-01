@@ -12,9 +12,9 @@ import { BRAND_NAME, toCanonicalUrl, withBrandSuffix } from "@/lib/seo/brand"
 export const metadata: Metadata = {
   title: "About Us",
   description:
-    "Learn how TipWalk started in 2024 and how we connect travelers with local guides through a value-first walking tour marketplace.",
+    "Learn how Touricho started in 2024 and how we connect travelers with local guides through a value-first walking tour marketplace.",
   keywords: [
-    "about tipwalk",
+    "about touricho",
     "walking tour marketplace",
     "local guide platform",
     "travel community",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   ],
   openGraph: {
     title: withBrandSuffix("About Us"),
-    description: "TipWalk started in 2024 to make authentic local tours easier to discover and book.",
+    description: "Touricho started in 2024 to make authentic local tours easier to discover and book.",
     url: toCanonicalUrl("/about"),
     siteName: BRAND_NAME,
     type: "website",
@@ -60,7 +60,7 @@ export default async function AboutPage() {
   const cityLabels = featuredCities.map((city) => city.name).filter(Boolean)
 
   const milestones = [
-    { year: "2024", title: "Company Started", description: "TipWalk launched with a focused set of city pilots." },
+    { year: "2024", title: "Company Started", description: "Touricho launched with a focused set of city pilots." },
     {
       year: "2025",
       title: "Marketplace Scale",
@@ -85,10 +85,10 @@ export default async function AboutPage() {
               Founded in 2024
             </Badge>
             <h1 className="public-template-heading text-4xl font-bold tracking-tight lg:text-5xl">
-              We built TipWalk to make local discovery feel personal again.
+              We built Touricho to make local discovery feel personal again.
             </h1>
             <p className="public-template-copy mt-6 text-lg leading-relaxed">
-              TipWalk started in 2024 as a traveler-and-guide marketplace for authentic city experiences. Our model is
+              Touricho started in 2024 as a traveler-and-guide marketplace for authentic city experiences. Our model is
               simple: reserve for free, explore with a local, and tip based on the real value of the tour.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -135,7 +135,7 @@ export default async function AboutPage() {
             <h2 className="public-template-heading text-3xl font-bold">Our Story</h2>
             <p className="public-template-copy mt-4 leading-relaxed">
               We started in 2024 after seeing the same issue again and again: travelers wanted local context, while
-              local guides needed a better way to be discovered. TipWalk was created to connect both sides with clear
+              local guides needed a better way to be discovered. Touricho was created to connect both sides with clear
               incentives for quality and trust.
             </p>
           </div>
@@ -184,7 +184,7 @@ export default async function AboutPage() {
               <div>
                 <h2 className="public-template-heading text-2xl font-bold">Where we operate</h2>
                 <p className="public-template-copy mt-2">
-                  TipWalk currently serves guides and travelers across a growing set of cities.
+                  Touricho currently serves guides and travelers across a growing set of cities.
                 </p>
               </div>
             </div>
@@ -221,7 +221,7 @@ export default async function AboutPage() {
           <div className="public-band p-8 text-center lg:p-16">
             <h2 className="public-template-heading text-3xl font-bold lg:text-4xl">Build your next city experience with us</h2>
             <p className="public-template-copy mt-4 max-w-2xl mx-auto text-lg">
-              Whether you're traveling or guiding, TipWalk is built to reward authentic, high-quality experiences.
+              Whether you're traveling or guiding, Touricho is built to reward authentic, high-quality experiences.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Button size="lg" className="landing-btn-coral" asChild>

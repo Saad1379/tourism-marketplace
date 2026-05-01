@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { buildTourPath } from "@/lib/tour-url"
 
 const PRO_BADGE_EXPLANATION =
-  "PRO means this guide is on TipWalk's paid Pro plan with extra tools and visibility, not a quality guarantee by itself."
+  "PRO means this guide is on Touricho's paid Pro plan with extra tools and visibility, not a quality guarantee by itself."
 const DEFAULT_CANCELLATION_POLICY_SHORT = "Cancel at least 24h before start so others can join."
 
 export interface TourCardProps {

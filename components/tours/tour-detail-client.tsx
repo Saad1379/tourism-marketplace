@@ -41,7 +41,7 @@ import { buildHighlightFallback, buildRouteSnapshotFallback } from "@/lib/tours/
 import { resolveTourTimeZone } from "@/lib/timezone"
 
 const PRO_BADGE_EXPLANATION =
-  "PRO means this guide is on TipWalk's paid Pro plan with extra tools and visibility, not a quality guarantee by itself."
+  "PRO means this guide is on Touricho's paid Pro plan with extra tools and visibility, not a quality guarantee by itself."
 const DEFAULT_WHAT_TO_BRING = "Wear comfortable shoes and bring water, weather protection, and anything you need for a walking tour."
 const DEFAULT_CANCELLATION_POLICY = "Cancel at least 24h before the tour start so other travelers can take the available seat."
 const DEFAULT_TIP_EXPECTATION =
@@ -1272,7 +1272,7 @@ export default function TourDetailClient({ tourId, initialTour, initialRelatedTo
                     <Card className="border-border/60">
                       <CardContent className="p-5">
                         <p className="text-sm text-muted-foreground">
-                          This tour is new on TipWalk. Review history will appear after the first completed bookings.
+                          This tour is new on Touricho. Review history will appear after the first completed bookings.
                         </p>
                       </CardContent>
                     </Card>
@@ -1370,7 +1370,7 @@ export default function TourDetailClient({ tourId, initialTour, initialRelatedTo
                           </p>
                         )}
                         <p className="mt-2 text-xs text-muted-foreground">
-                          {guideSinceLabel ? `Hosting on TipWalk since ${guideSinceLabel}` : "Local guide on TipWalk"}
+                          {guideSinceLabel ? `Hosting on Touricho since ${guideSinceLabel}` : "Local guide on Touricho"}
                           {guidePublishedToursCount > 0 ? ` · ${guidePublishedToursCount} published tour${guidePublishedToursCount === 1 ? "" : "s"}` : ""}
                           {hasGuideVerifiedBadge ? " · Identity verified" : ""}
                         </p>

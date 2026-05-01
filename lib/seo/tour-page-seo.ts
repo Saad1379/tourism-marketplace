@@ -205,7 +205,7 @@ export function buildTourJsonLdSchemas(input: {
   const maxAttendeeCapacity = Math.max(Number(tour?.max_capacity || 0), 1)
   const nearestFutureStart = findNearestFutureScheduleStart(tour?.tour_schedules)
   const schemaImage = resolveTourSchemaImageUrl(tour)
-  const guideName = normalizeText(tour?.guide?.full_name || "TipWalk Guide")
+  const guideName = normalizeText(tour?.guide?.full_name || "Touricho Guide")
   const durationMinutes = Math.max(15, Number(tour?.duration_minutes || 120))
 
   const touristAttraction = {

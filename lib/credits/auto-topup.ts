@@ -1,4 +1,4 @@
-export const AUTO_TOPUP_CONFIG_KEY = "tipwalk_auto_topup_config_v1"
+export const AUTO_TOPUP_CONFIG_KEY = "touricho_auto_topup_config_v1"
 export const AUTO_TOPUP_THRESHOLD = 20
 
 export type AutoTopupConfig = {

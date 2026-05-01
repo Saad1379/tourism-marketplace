@@ -12,7 +12,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Card, CardContent } from "@/components/ui/card"
 import type { ConversationDTO } from "@/lib/messaging/types"
 
-export default function GuideMessagesPage() {
+import { isSeller } from "@/lib/marketplace/roles"
+
+export default function SellerMessagesPage() {
   const { user, profile, isLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -31,7 +33,7 @@ export default function GuideMessagesPage() {
       return
     }
 
-    if (!isLoading && profile && profile.role !== "guide") {
+    if (!isLoading && profile && !isSeller(profile.role)) {
       router.push("/")
     }
   }, [isLoading, user, profile, router])
@@ -66,11 +68,11 @@ export default function GuideMessagesPage() {
     hydrateFromQuery()
   }, [conversationIdParam, selectedConversation?.id, clearConversation, user])
 
-  const isAuthorizedGuide = useMemo(() => {
-    return Boolean(user && profile?.role === "guide")
+  const isAuthorizedSeller = useMemo(() => {
+    return Boolean(user && isSeller(profile?.role))
   }, [user, profile?.role])
 
-  if (!isAuthorizedGuide) {
+  if (!isAuthorizedSeller) {
     return null
   }
 

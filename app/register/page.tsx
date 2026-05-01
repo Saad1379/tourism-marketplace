@@ -14,8 +14,9 @@ import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { createClient } from "@/lib/supabase/client"
 import { formatAuthError } from "@/lib/utils"
+import { canonicalDbRole } from "@/lib/marketplace/roles"
 import { trackFunnelEvent } from "@/lib/analytics/ga"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 
 type UserRole = "tourist" | "guide"
 
@@ -102,7 +103,7 @@ export default function RegisterPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [role, setRole] = useState<UserRole>("tourist")
+  const [role, setRole] = useState<"seller" | "buyer">("buyer")
   const [formData, setFormData] = useState<RegisterForm>(initialForm)
   const [fieldErrors, setFieldErrors] = useState<RegisterErrors>({})
   const [touched, setTouched] = useState<Partial<Record<keyof RegisterForm, boolean>>>({})
@@ -160,8 +161,8 @@ export default function RegisterPage() {
     try {
       const redirectUrl = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
       const urlWithRole = new URL(redirectUrl)
-      if (role === "guide") {
-        urlWithRole.searchParams.set("role", "guide")
+      if (role === "seller") {
+        urlWithRole.searchParams.set("role", "seller")
       }
 
       const { error: authError } = await supabase.auth.signUp({
@@ -176,7 +177,7 @@ export default function RegisterPage() {
             // Picked up by the handle_new_user trigger so the profile is
             // created with the right role on first insert — we don't have to
             // wait for the email-confirmation callback to fix it up.
-            requested_role: role,
+            requested_role: canonicalDbRole(role),
           },
         },
       })
@@ -256,12 +257,12 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
               <div className="lg:col-span-2 space-y-6">
-                        <Link href="/" className="mb-8 flex justify-start" aria-label="TipWalk home">
-          <TipWalkLogo size="md" />
+                        <Link href="/" className="mb-8 flex justify-start" aria-label="Touricho home">
+          <TourichoLogo size="md" />
         </Link>
                 <div className="text-center lg:text-left">
                   <CardTitle className="text-2xl font-bold text-foreground">Create an account</CardTitle>
-                  <CardDescription className="mt-1">Join TipWalk and start exploring</CardDescription>
+                  <CardDescription className="mt-1">Join Touricho and start exploring</CardDescription>
                 </div>
 
                 <div className="space-y-3">
@@ -269,8 +270,8 @@ export default function RegisterPage() {
                   <div className="grid grid-cols-1 gap-2">
                     {(
                       [
-                        { value: "tourist", label: "Tourist", desc: "Find & book tours" },
-                        { value: "guide", label: "Agent", desc: "Lead tours, earn tips" },
+                        { value: "buyer", label: "Buyer", desc: "Find & book tours" },
+                        { value: "seller", label: "Seller", desc: "Offer tours or cars, earn tips" },
                       ] as const
                     ).map((option) => (
                       <button
@@ -287,7 +288,7 @@ export default function RegisterPage() {
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                           role === option.value ? "bg-primary text-primary-foreground" : "bg-muted"
                         }`}>
-                          {option.value === "tourist" ? (
+                          {option.value === "buyer" ? (
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
@@ -492,7 +493,7 @@ export default function RegisterPage() {
                         disabled={isLoading}
                       />
                       <label htmlFor="terms" className="text-sm text-muted-foreground cursor-pointer leading-snug">
-                        I agree to TipWalk's{" "}
+                        I agree to Touricho's{" "}
                         <Link href="/terms" className="text-primary hover:underline font-medium">
                           Terms of Service
                         </Link>{" "}

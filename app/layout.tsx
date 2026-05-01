@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     description:
       "Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe.",
     images: ["/adventure-travel-walking.jpg"],
-    creator: "@tipwalk",
+    creator: "@touricho",
   },
   robots: {
     index: true,
@@ -173,11 +173,11 @@ export default function RootLayout({
             dangerouslySetInnerHTML={{
               __html: `
                 (function (w, d, s, src) {
-                  if (w.__tipwalkLoadMetaPixel) return;
-                  w.__tipwalkMetaPixelId = '${META_PIXEL_ID}';
-                  w.__tipwalkLoadMetaPixel = function () {
-                    if (w.__tipwalkMetaPixelLoaded) return;
-                    w.__tipwalkMetaPixelLoaded = true;
+                  if (w.__tourichoLoadMetaPixel) return;
+                  w.__tourichoMetaPixelId = '${META_PIXEL_ID}';
+                  w.__tourichoLoadMetaPixel = function () {
+                    if (w.__tourichoMetaPixelLoaded) return;
+                    w.__tourichoMetaPixelLoaded = true;
                     if (w.fbq) return;
                     var n = w.fbq = function () {
                       if (n.callMethod) {

@@ -31,7 +31,7 @@ export async function DELETE(request: NextRequest) {
     const { error: anonymizeError } = await serviceClient
       .from("profiles")
       .update({
-        email: `deleted_${user.id}@tipwalk.com`,
+        email: `deleted_${user.id}@touricho.com`,
         full_name: "Deleted User",
         phone: null,
         bio: null,

@@ -628,14 +628,14 @@ function wordCount(value: string | null | undefined): number {
 function buildCityEditorialFallback(citySlug: string, cityName: string): string {
   if (citySlug === "paris") {
     return [
-      `Paris rewards travelers who explore it on foot, and free walking tours help you understand each district beyond postcard landmarks. On TipWalk, you can compare local guides, languages, and start times before you reserve. Booking is free, and you tip your guide at the end based on the quality of the experience.`,
+      `Paris rewards travelers who explore it on foot, and free walking tours help you understand each district beyond postcard landmarks. On Touricho, you can compare local guides, languages, and start times before you reserve. Booking is free, and you tip your guide at the end based on the quality of the experience.`,
       `If this is your first time in Paris, start with routes around the Marais, Ile de la Cite, and the Latin Quarter for major history and architecture. Montmartre is ideal if you want views, art stories, and neighborhood character. Returning travelers often prefer quieter routes with local markets, side streets, and practical recommendations for where to eat or continue exploring after the tour.`,
       `For planning, wear comfortable shoes, check the weather, and arrive 10 to 15 minutes early at the listed meeting point. Spring and early fall usually provide the easiest walking conditions, while summer afternoons can feel crowded around top landmarks. Most tours run with small groups so you can ask questions and move at a steady pace. Before booking, review tour duration, language, and group limits to choose the best fit for your trip schedule.`,
     ].join("\n\n")
   }
 
   return [
-    `Discover free walking tours in ${cityName} with verified local guides on TipWalk. Compare routes, languages, and schedules to find the right tour style for your trip.`,
+    `Discover free walking tours in ${cityName} with verified local guides on Touricho. Compare routes, languages, and schedules to find the right tour style for your trip.`,
     `Reserve your spot for free, join your guide at the listed meeting point, and tip at the end based on the value of the experience.`,
     `Before booking, check the duration, group size, and practical details so you can choose the best option for your day.`,
   ].join("\n\n")
@@ -1202,4 +1202,129 @@ export async function getLandingStats() {
     completedBookings: bookingsCount || 0,
     totalReviews: (reviewsCount || 0) + (qrReviewsCount || 0),
   }
+}
+
+// ============================================================================
+// Marketplace-generic query helpers
+// These replace the old guide/tourist-specific functions with role-agnostic
+// equivalents. Old names kept below as backward-compat aliases.
+// ============================================================================
+
+/**
+ * Get all listings (tours + cars) owned by a seller.
+ * For now returns tours; extend to include cars when needed.
+ */
+export async function getSellerListings(sellerId: string) {
+  return getGuideTours(sellerId)
+}
+
+// getGuideTours is also exported directly above (backward compat alias available via getSellerListings)
+
+/**
+ * Get bookings that belong to a seller's listings.
+ * Accepts both guide/seller terminology.
+ */
+export async function getSellerBookings(sellerId: string) {
+  return getGuideBookings(sellerId)
+}
+
+// getGuideBookings is also exported directly above (backward compat alias available via getSellerBookings)
+
+/**
+ * Get a buyer's bookings.
+ * Accepts both tourist/buyer terminology.
+ */
+export async function getBuyerBookings(buyerId: string) {
+  return getUserBookings(buyerId)
+}
+
+// getUserBookings is also exported directly above (backward compat alias available via getBuyerBookings)
+
+/**
+ * Fetch published cars with optional filters.
+ */
+export async function getPublicCars(filters?: {
+  city_slug?: string
+  limit?: number
+  q?: string
+  transmission?: string
+}) {
+  const supabase = await getSupabasePublicReader()
+  if (!supabase) return []
+
+  const limit = filters?.limit ?? 20
+
+  let query = supabase
+    .from("cars")
+    .select(`
+      id,
+      title,
+      description,
+      city,
+      city_slug,
+      country,
+      price_per_day,
+      make,
+      model,
+      year,
+      seats,
+      transmission,
+      fuel_type,
+      images,
+      features,
+      status,
+      created_at,
+      seller:seller_id(id, full_name, avatar_url),
+      car_schedules(id, start_time, end_time, capacity, booked_count)
+    `)
+    .eq("status", "published")
+    .order("created_at", { ascending: false })
+    .limit(limit)
+
+  if (filters?.city_slug) query = query.eq("city_slug", filters.city_slug)
+  if (filters?.transmission) query = query.eq("transmission", filters.transmission)
+
+  const { data, error } = await query
+
+  if (error) {
+    console.error("[v0] Error fetching public cars:", error)
+    return []
+  }
+
+  let results = data ?? []
+
+  if (filters?.q) {
+    const term = filters.q.toLowerCase()
+    results = results.filter(
+      (car: any) =>
+        car.title?.toLowerCase().includes(term) ||
+        car.make?.toLowerCase().includes(term) ||
+        car.model?.toLowerCase().includes(term),
+    )
+  }
+
+  return results
+}
+
+/**
+ * Get a single car by ID (with schedules and seller info).
+ * Returns null if not found or not published.
+ */
+export async function getCarById(carId: string) {
+  const supabase = await getSupabaseServer()
+  if (!supabase) return null
+
+  const { data, error } = await supabase
+    .from("cars")
+    .select(`
+      *,
+      seller:seller_id(id, full_name, avatar_url, bio),
+      car_schedules(id, start_time, end_time, capacity, booked_count, price_override)
+    `)
+    .eq("id", carId)
+    .eq("status", "published")
+    .single()
+
+  if (error || !data) return null
+  return data
 }

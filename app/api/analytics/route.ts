@@ -29,6 +29,8 @@ type BookingRow = {
   }[]
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export async function GET(_request: NextRequest) {
   try {
     const supabase = await createClient()
@@ -41,8 +43,8 @@ export async function GET(_request: NextRequest) {
     }
 
     const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can view analytics" }, { status: 403 })
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can view analytics" }, { status: 403 })
     }
 
     const { data: analyticsRows, error: analyticsError } = await supabase

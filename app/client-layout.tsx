@@ -34,8 +34,8 @@ function ClientLayout({
           <Suspense fallback={null}>
             <LandingEffectsLoader />
           </Suspense>
-          <AssistantWidget />
-          <Toaster position="top-right" expand={true} richColors />
+   
+          <Toaster position="top-right" expand={true} richColors closeButton />
         </AuthProvider>
       </ThemeProvider>
       <Analytics />

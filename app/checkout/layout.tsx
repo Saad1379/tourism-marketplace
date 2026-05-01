@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Checkout | TipWalk",
+  title: "Checkout | Touricho",
   robots: {
     index: false,
     follow: false,

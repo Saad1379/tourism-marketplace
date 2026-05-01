@@ -201,7 +201,7 @@ export default async function CityToursPage({ params }: PageProps) {
     {
       heading: "How Free Walking Tours in Paris Work",
       paragraphs: [
-        "TipWalk reservations are free, so guests can compare routes and reserve without upfront payment. After the tour, you tip your guide in cash or by card based on how useful, engaging, and practical the experience felt.",
+        "Touricho reservations are free, so guests can compare routes and reserve without upfront payment. After the tour, you tip your guide in cash or by card based on how useful, engaging, and practical the experience felt.",
         "This model helps travelers test a route with low risk while still rewarding excellent guides. It also means guides focus on value: clear storytelling, local recommendations, and strong group pacing from the first stop to the final stop.",
       ],
       bullets: [

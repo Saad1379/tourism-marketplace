@@ -4,7 +4,7 @@ import { createSign } from "node:crypto"
 import { mkdir, readFile, writeFile } from "node:fs/promises"
 import path from "node:path"
 
-const DEFAULT_SITE_URL = "sc-domain:tipwalk.com"
+const DEFAULT_SITE_URL = "sc-domain:touricho.com"
 const DEFAULT_REPORT_DIR = "docs/reports"
 const PRIMARY_WINDOW_DAYS = 90
 const RECENT_WINDOW_DAYS = 28

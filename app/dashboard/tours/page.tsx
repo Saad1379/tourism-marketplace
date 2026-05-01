@@ -38,6 +38,8 @@ import { useAuth } from "@/lib/supabase/auth-context"
 import { useUserStore } from "@/store/user-store"
 import { LoadingSpinner } from "@/components/loading-spinner"
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export default function ToursPage() {
   const router = useRouter()
   const { user, profile: authProfile, isLoading: authLoading } = useAuth()
@@ -58,13 +60,13 @@ export default function ToursPage() {
       return
     }
 
-    if (authProfile && authProfile.role !== "guide") {
+    if (authProfile && !isSeller(authProfile.role)) {
       router.push("/")
     }
   }, [authLoading, user, authProfile, router])
   
   useEffect(() => {
-    if (user && profile?.role === 'guide') {
+    if (user && isSeller(profile?.role)) {
       fetchPlan()
     }
   }, [user, profile?.role])
@@ -190,12 +192,12 @@ export default function ToursPage() {
     )
   }
 
-  if (!user || authProfile?.role !== "guide") {
+  if (!user || !isSeller(authProfile?.role)) {
     return null
   }
 
   return (
-    <main className="min-h-screen bg-muted/30 p-4 lg:p-8">
+    <div className="space-y-6">
           <section className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold">My Tours</h1>
@@ -401,7 +403,7 @@ export default function ToursPage() {
               ))}
             </TabsContent>
           </Tabs>
-    </main>
+    </div>
   )
 }
 

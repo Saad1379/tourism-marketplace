@@ -1,6 +1,6 @@
 "use client"
 
-// GTM-first analytics dispatcher for TipWalk.
+// GTM-first analytics dispatcher for Touricho.
 // Google events flow through dataLayer; PostHog mirrors the same funnel events.
 import { getConsentChoice, type ConsentChoice } from "@/components/cookies/cookie-utils"
 import { CONSENT_DENIED_REGIONS } from "./consent-regions"
@@ -40,7 +40,7 @@ const CONSENT_DEFAULT_DENIED_FOR_REGIONS = {
 } as const
 
 const GTM_LOAD_IDLE_TIMEOUT_MS = 1400
-const GTM_SCRIPT_ATTR = "data-tipwalk-gtm-script"
+const GTM_SCRIPT_ATTR = "data-touricho-gtm-script"
 
 let hasInitializedGoogle = false
 let hasLoadedGtmScript = false
@@ -54,10 +54,10 @@ type UTMParamKey = (typeof UTM_PARAMS)[number]
 function debugLog(message: string, payload?: Record<string, unknown>) {
   if (process.env.NODE_ENV === "production") return
   if (payload) {
-    console.info(`[TipWalk Analytics] ${message}`, payload)
+    console.info(`[Touricho Analytics] ${message}`, payload)
     return
   }
-  console.info(`[TipWalk Analytics] ${message}`)
+  console.info(`[Touricho Analytics] ${message}`)
 }
 
 function ensureDataLayer() {
@@ -175,7 +175,7 @@ export function initGA(initialConsent: ConsentChoice = null) {
   if (typeof window === "undefined") return
 
   if (!GTM_ID) {
-    console.warn("[TipWalk Analytics] GTM_ID not configured. Skipping GTM initialization.")
+    console.warn("[Touricho Analytics] GTM_ID not configured. Skipping GTM initialization.")
     return
   }
 

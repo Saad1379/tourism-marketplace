@@ -3,7 +3,7 @@ import { Mail, Phone } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { buildCityToursPath } from "@/lib/tour-url"
-import { TipWalkLogo } from "@/components/brand/tipwalk-logo"
+import { TourichoLogo } from "@/components/brand/touricho-logo"
 import { ConditionalReviewsLink } from "@/components/conditional-reviews-link"
 
 type FooterVariant = "default" | "landingTemplate"
@@ -24,17 +24,17 @@ export function Footer({ variant = "default" }: FooterProps = {}) {
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
             <div className="lg:col-span-2 space-y-4">
-              <Link href="/" aria-label="TipWalk home">
-                <TipWalkLogo size="lg" textClassName="text-[color:var(--landing-footer-ink)]" />
+              <Link href="/" aria-label="Touricho home">
+                <TourichoLogo size="lg" textClassName="text-[color:var(--landing-footer-ink)]" />
               </Link>
               <p className="max-w-sm text-sm leading-relaxed text-[color:var(--landing-footer-muted)]">
                 Connecting curious travelers with passionate local guides for authentic walking tour experiences that
                 reveal the soul of every city.
               </p>
               <div className="flex flex-col gap-2 text-sm text-[color:var(--landing-footer-muted)]">
-                <a href="mailto:hello@tipwalk.com" className="flex items-center gap-2 transition-colors hover:text-[color:var(--landing-footer-ink)]">
+                <a href="mailto:hello@touricho.com" className="flex items-center gap-2 transition-colors hover:text-[color:var(--landing-footer-ink)]">
                   <Mail className="h-4 w-4" />
-                  hello@tipwalk.com
+                  hello@touricho.com
                 </a>
                 {CONTACT_PHONE && CONTACT_PHONE_HREF ? (
                   <a href={CONTACT_PHONE_HREF} className="flex items-center gap-2 transition-colors hover:text-[color:var(--landing-footer-ink)]">
@@ -83,7 +83,7 @@ export function Footer({ variant = "default" }: FooterProps = {}) {
 
           <div className="mt-12 border-t border-[color:var(--landing-border)]/80 pt-7">
             <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-              <p className="text-sm text-[color:var(--landing-footer-muted)]">© {new Date().getFullYear()} TipWalk. All rights reserved.</p>
+              <p className="text-sm text-[color:var(--landing-footer-muted)]">© {new Date().getFullYear()} Touricho. All rights reserved.</p>
               <div className="flex gap-6">
                 <Link href="/privacy" className="text-sm text-[color:var(--landing-footer-muted)] transition-colors hover:text-[color:var(--landing-footer-ink)]">Privacy</Link>
                 <Link href="/terms" className="text-sm text-[color:var(--landing-footer-muted)] transition-colors hover:text-[color:var(--landing-footer-ink)]">Terms</Link>
@@ -128,8 +128,8 @@ export function Footer({ variant = "default" }: FooterProps = {}) {
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" aria-label="TipWalk home">
-              <TipWalkLogo size="md" textClassName="text-sidebar-foreground" />
+            <Link href="/" aria-label="Touricho home">
+              <TourichoLogo size="md" textClassName="text-sidebar-foreground" />
             </Link>
             <p className="text-sm leading-relaxed text-sidebar-foreground/70 max-w-sm">
               Connecting curious travelers with passionate local guides for authentic walking tour experiences that
@@ -137,11 +137,11 @@ export function Footer({ variant = "default" }: FooterProps = {}) {
             </p>
             <div className="flex flex-col gap-2 text-sm text-sidebar-foreground/70">
               <a
-                href="mailto:hello@tipwalk.com"
+                href="mailto:hello@touricho.com"
                 className="flex items-center gap-2 transition-colors hover:text-sidebar-foreground"
               >
                 <Mail className="h-4 w-4" />
-                hello@tipwalk.com
+                hello@touricho.com
               </a>
               {CONTACT_PHONE && CONTACT_PHONE_HREF ? (
                 <a href={CONTACT_PHONE_HREF} className="flex items-center gap-2 transition-colors hover:text-sidebar-foreground">
@@ -232,7 +232,7 @@ export function Footer({ variant = "default" }: FooterProps = {}) {
 
         <div className="mt-12 border-t border-sidebar-border/80 pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-sidebar-foreground/60">© {new Date().getFullYear()} TipWalk. All rights reserved.</p>
+            <p className="text-sm text-sidebar-foreground/60">© {new Date().getFullYear()} Touricho. All rights reserved.</p>
             <div className="flex gap-6">
               <Link href="/privacy" className="text-sm text-sidebar-foreground/60 transition-colors hover:text-sidebar-foreground">
                 Privacy

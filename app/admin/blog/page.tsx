@@ -567,7 +567,7 @@ export default function AdminBlogPage() {
                   <Input
                     value={generator.topic}
                     onChange={(event) => setGenerator((state) => ({ ...state, topic: event.target.value }))}
-                    placeholder="Example: how much to tip walking tour guide paris"
+                    placeholder="Example: how much to tourichoing tour guide paris"
                   />
                 </div>
                 <div className="space-y-1">

@@ -1,92 +1,117 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Crown, ShieldCheck, Wallet, ArrowRight, CheckCircle2, Zap } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useUserStore } from "@/store/user-store"
-import { useAuth } from "@/lib/supabase/auth-context"
-import { LoadingSpinner } from "@/components/loading-spinner"
-import { Spinner } from "@/components/ui/spinner"
-import { createClient } from "@/lib/supabase/client"
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Crown,
+  ShieldCheck,
+  Wallet,
+  ArrowRight,
+  CheckCircle2,
+  Zap,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useUserStore } from "@/store/user-store";
+import { useAuth } from "@/lib/supabase/auth-context";
+import { LoadingSpinner } from "@/components/loading-spinner";
+import { Spinner } from "@/components/ui/spinner";
+import { createClient } from "@/lib/supabase/client";
 import {
   AUTO_TOPUP_CONFIG_KEY,
   AUTO_TOPUP_THRESHOLD,
   parseAutoTopupConfig,
-} from "@/lib/credits/auto-topup"
+} from "@/lib/credits/auto-topup";
 
 type CreditPackage = {
-  id: string
-  name: string
-  credits: number
-  price: number
-  isPopular: boolean
-}
+  id: string;
+  name: string;
+  credits: number;
+  price: number;
+  isPopular: boolean;
+};
 
 const freeHighlights = [
   "1 published tour maximum",
   "Maximum 7 guests per tour",
   "Basic listing visibility",
   "Standard support",
-]
+];
 
 const proHighlights = [
   "Unlimited tours and group capacity",
   "Boost tools and priority placement",
   "Advanced analytics and visibility insights",
   "Verified badge and stronger trust signals",
-]
+];
+
+import { isSeller } from "@/lib/marketplace/roles"
 
 export default function UpgradePage() {
-  const router = useRouter()
-  const supabase = createClient()
-  const { user, profile, isLoading: authLoading } = useAuth()
-  const { planType, planLoading } = useUserStore()
+  const router = useRouter();
+  const supabase = createClient();
+  const { user, profile, isLoading: authLoading } = useAuth();
+  const { planType, planLoading } = useUserStore();
 
-  const [packages, setPackages] = useState<CreditPackage[]>([])
-  const [creditsBalance, setCreditsBalance] = useState(0)
-  const [loadingData, setLoadingData] = useState(true)
+  const [packages, setPackages] = useState<CreditPackage[]>([]);
+  const [creditsBalance, setCreditsBalance] = useState(0);
+  const [loadingData, setLoadingData] = useState(true);
 
-  const [activationPackageId, setActivationPackageId] = useState("")
-  const [autoTopupEnabled, setAutoTopupEnabled] = useState(false)
-  const [autoTopupPackageId, setAutoTopupPackageId] = useState("")
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const [activationPolicyMessage, setActivationPolicyMessage] = useState<string | null>(null)
+  const [activationPackageId, setActivationPackageId] = useState("");
+  const [autoTopupEnabled, setAutoTopupEnabled] = useState(false);
+  const [autoTopupPackageId, setAutoTopupPackageId] = useState("");
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [activationPolicyMessage, setActivationPolicyMessage] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
-    if (authLoading) return
+    if (authLoading) return;
 
     if (!user) {
-      router.push("/login")
-      return
+      router.push("/login");
+      return;
     }
 
-    if (profile && profile.role !== "guide") {
-      router.push("/")
+    if (profile && !isSeller(profile.role)) {
+      router.push("/");
     }
-  }, [authLoading, user, profile, router])
+  }, [authLoading, user, profile, router]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return
-    const parsed = parseAutoTopupConfig(localStorage.getItem(AUTO_TOPUP_CONFIG_KEY))
-    if (!parsed) return
+    if (typeof window === "undefined") return;
+    const parsed = parseAutoTopupConfig(
+      localStorage.getItem(AUTO_TOPUP_CONFIG_KEY),
+    );
+    if (!parsed) return;
 
-    setAutoTopupEnabled(parsed.enabled)
-    setAutoTopupPackageId(parsed.packageId)
-  }, [])
+    setAutoTopupEnabled(parsed.enabled);
+    setAutoTopupPackageId(parsed.packageId);
+  }, []);
 
   useEffect(() => {
-    if (!user || profile?.role !== "guide") return
+    if (!user || !isSeller(profile?.role)) return;
 
     const fetchData = async () => {
       try {
-        setLoadingData(true)
+        setLoadingData(true);
 
         const [creditRes, packageRes] = await Promise.all([
           fetch("/api/credits/balance", { cache: "no-store" }),
@@ -95,63 +120,67 @@ export default function UpgradePage() {
             .select("id, name, credits, price_eur, is_popular")
             .eq("is_active", true)
             .order("display_order", { ascending: true }),
-        ])
+        ]);
 
         if (creditRes.ok) {
-          const creditJson = await creditRes.json()
-          setCreditsBalance(Number(creditJson.balance || 0))
+          const creditJson = await creditRes.json();
+          setCreditsBalance(Number(creditJson.balance || 0));
         }
 
         if (!packageRes.error && packageRes.data) {
-          const normalized: CreditPackage[] = packageRes.data.map((pkg: any) => ({
-            id: pkg.id,
-            name: pkg.name,
-            credits: Number(pkg.credits || 0),
-            price: Number(pkg.price_eur || 0),
-            isPopular: Boolean(pkg.is_popular),
-          }))
+          const normalized: CreditPackage[] = packageRes.data.map(
+            (pkg: any) => ({
+              id: pkg.id,
+              name: pkg.name,
+              credits: Number(pkg.credits || 0),
+              price: Number(pkg.price_eur || 0),
+              isPopular: Boolean(pkg.is_popular),
+            }),
+          );
 
-          setPackages(normalized)
+          setPackages(normalized);
 
-          const firstUpgradePackage = normalized.find((pkg) => pkg.credits === 50) || null
+          const firstUpgradePackage =
+            normalized.find((pkg) => pkg.credits === 50) || null;
           if (firstUpgradePackage) {
-            setActivationPackageId(firstUpgradePackage.id)
-            setActivationPolicyMessage(null)
+            setActivationPackageId(firstUpgradePackage.id);
+            setActivationPolicyMessage(null);
           } else {
-            setActivationPackageId("")
-            setActivationPolicyMessage("The required 50-credit activation package is not configured yet.")
+            setActivationPackageId("");
+            setActivationPolicyMessage(
+              "The required 50-credit activation package is not configured yet.",
+            );
           }
 
           const defaultPkg =
-            normalized.find((pkg) => pkg.isPopular) ||
-            normalized[0]
+            normalized.find((pkg) => pkg.isPopular) || normalized[0];
 
           if (defaultPkg && !autoTopupPackageId) {
-            setAutoTopupPackageId(defaultPkg.id)
+            setAutoTopupPackageId(defaultPkg.id);
           }
         }
       } finally {
-        setLoadingData(false)
+        setLoadingData(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [user, profile?.role])
+    fetchData();
+  }, [user, profile?.role]);
 
   const activationPackage = useMemo(
     () => packages.find((pkg) => pkg.id === activationPackageId) || null,
     [packages, activationPackageId],
-  )
+  );
 
   const autoTopupPackage = useMemo(
     () => packages.find((pkg) => pkg.id === autoTopupPackageId) || null,
     [packages, autoTopupPackageId],
-  )
+  );
 
   const handleStartActivation = () => {
-    if (!activationPackage) return
+    if (!activationPackage) return;
 
-    const preferredTopupPackage = autoTopupPackageId || activationPackage.id
+    const preferredTopupPackage = autoTopupPackageId || activationPackage.id;
     localStorage.setItem(
       AUTO_TOPUP_CONFIG_KEY,
       JSON.stringify({
@@ -159,15 +188,17 @@ export default function UpgradePage() {
         packageId: preferredTopupPackage,
         threshold: AUTO_TOPUP_THRESHOLD,
       }),
-    )
+    );
 
-    router.push(`/checkout?id=${encodeURIComponent(activationPackage.id)}&source=pro_activation`)
-  }
+    router.push(
+      `/checkout?id=${encodeURIComponent(activationPackage.id)}&source=pro_activation`,
+    );
+  };
 
   const handleSaveAutoTopup = () => {
     if (!autoTopupPackageId) {
-      setSaveMessage("Select a package before saving auto top-up settings.")
-      return
+      setSaveMessage("Select a package before saving auto top-up settings.");
+      return;
     }
 
     localStorage.setItem(
@@ -177,22 +208,22 @@ export default function UpgradePage() {
         packageId: autoTopupPackageId,
         threshold: AUTO_TOPUP_THRESHOLD,
       }),
-    )
+    );
 
-    setSaveMessage("Auto top-up settings saved.")
-    setTimeout(() => setSaveMessage(null), 2500)
-  }
+    setSaveMessage("Auto top-up settings saved.");
+    setTimeout(() => setSaveMessage(null), 2500);
+  };
 
   if (authLoading || planLoading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <LoadingSpinner label="Loading upgrade settings..." />
       </div>
-    )
+    );
   }
 
-  if (!user || profile?.role !== "guide") {
-    return null
+  if (!user || !isSeller(profile?.role)) {
+    return null;
   }
 
   return (
@@ -203,9 +234,12 @@ export default function UpgradePage() {
             <Badge className="mb-2 bg-primary text-primary-foreground">
               <Crown className="w-3 h-3 mr-1" /> Pro Access
             </Badge>
-            <h2 className="text-2xl font-bold tracking-tight">Upgrade & Auto Top-up</h2>
+            <h2 className="text-2xl font-bold tracking-tight">
+              Upgrade & Auto Top-up
+            </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              One-time Pro activation, then automatic top-up flow when your balance reaches {AUTO_TOPUP_THRESHOLD} credits.
+              One-time Pro activation, then automatic top-up flow when your
+              balance reaches {AUTO_TOPUP_THRESHOLD} credits.
             </p>
           </div>
           <Button asChild variant="outline" className="bg-background">
@@ -222,7 +256,8 @@ export default function UpgradePage() {
               One-time Pro Activation
             </CardTitle>
             <CardDescription>
-              First-time activation is fixed to one package: 50 credits. After that, you stay Pro and can top up normally.
+              First-time activation is fixed to one package: 50 credits. After
+              that, you stay Pro and can top up normally.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -250,8 +285,13 @@ export default function UpgradePage() {
 
             {planType === "pro" ? (
               <div className="rounded-xl border border-secondary/30 bg-secondary/10 p-4">
-                <p className="font-semibold text-secondary">You are already on Pro.</p>
-                <p className="text-sm text-muted-foreground mt-1">Use auto top-up settings below to keep your credit wallet healthy.</p>
+                <p className="font-semibold text-secondary">
+                  You are already on Pro.
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Use auto top-up settings below to keep your credit wallet
+                  healthy.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -261,19 +301,29 @@ export default function UpgradePage() {
                   </div>
                 ) : activationPackage ? (
                   <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
-                    <p className="text-sm text-muted-foreground">Required first-time package</p>
-                    <p className="text-lg font-semibold text-foreground mt-1">{activationPackage.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Required first-time package
+                    </p>
+                    <p className="text-lg font-semibold text-foreground mt-1">
+                      {activationPackage.name}
+                    </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {activationPackage.credits} credits • €{activationPackage.price}
+                      {activationPackage.credits} credits • €
+                      {activationPackage.price}
                     </p>
                   </div>
                 ) : (
                   <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
-                    {activationPolicyMessage || "Unable to locate the 50-credit activation package."}
+                    {activationPolicyMessage ||
+                      "Unable to locate the 50-credit activation package."}
                   </div>
                 )}
 
-                <Button className="w-full" disabled={!activationPackage} onClick={handleStartActivation}>
+                <Button
+                  className="w-full"
+                  disabled={!activationPackage}
+                  onClick={handleStartActivation}
+                >
                   <span className="inline-flex items-center">
                     <Crown className="w-4 h-4 mr-2" />
                     {activationPackage
@@ -282,95 +332,44 @@ export default function UpgradePage() {
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </span>
                 </Button>
-
-                <p className="text-xs text-muted-foreground">
-                  After payment confirmation, your account is upgraded to Pro by the existing checkout/webhook flow.
-                </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-border/60">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-secondary" />
-              Auto Top-up at {AUTO_TOPUP_THRESHOLD}
+              <Wallet className="h-5 w-5 text-primary" />
+              What happens next?
             </CardTitle>
-            <CardDescription>
-              When your guide credits reach {AUTO_TOPUP_THRESHOLD} or less, dashboard flow can automatically take you to checkout for the selected package.
-            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-xl border border-border/60 bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">Current balance</p>
-              <p className="text-3xl font-bold tracking-tight">{creditsBalance} credits</p>
+          <CardContent className="grid gap-3 md:grid-cols-1 text-sm">
+            <div className="rounded-lg border border-border/60 p-4">
+              <p className="font-medium">1. Activate Pro once</p>
+              <p className="text-muted-foreground mt-1">
+                Use a one-time credit package checkout to unlock Pro.
+              </p>
             </div>
-
-            <div className="flex items-center justify-between rounded-xl border border-border/60 p-4">
-              <div>
-                <p className="font-medium">Enable auto top-up</p>
-                <p className="text-xs text-muted-foreground">Threshold is fixed at {AUTO_TOPUP_THRESHOLD} credits.</p>
-              </div>
-              <Switch checked={autoTopupEnabled} onCheckedChange={setAutoTopupEnabled} />
+            <div className="rounded-lg border border-border/60 p-4">
+              <p className="font-medium">2. Keep auto top-up enabled</p>
+              <p className="text-muted-foreground mt-1">
+                Set your preferred package for low-balance moments.
+              </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="autotopup-package">Top-up package</Label>
-              <Select value={autoTopupPackageId} onValueChange={setAutoTopupPackageId}>
-                <SelectTrigger id="autotopup-package">
-                  <SelectValue placeholder="Choose package" />
-                </SelectTrigger>
-                <SelectContent>
-                  {packages.map((pkg) => (
-                    <SelectItem key={pkg.id} value={pkg.id}>
-                      {pkg.name} • {pkg.credits} credits • €{pkg.price}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="rounded-lg border border-border/60 p-4">
+              <p className="font-medium">3. Maintain campaign continuity</p>
+              <p className="text-muted-foreground mt-1">
+                Avoid boost interruptions due to depleted wallet credits.
+              </p>
             </div>
-
-            {autoTopupEnabled && autoTopupPackage && (
-              <div className="rounded-xl border border-secondary/30 bg-secondary/10 p-3 text-sm">
-                <p className="font-medium text-secondary">Auto top-up target</p>
-                <p className="text-muted-foreground mt-1">
-                  Trigger checkout for <strong>{autoTopupPackage.name}</strong> when credits drop to {AUTO_TOPUP_THRESHOLD}.
-                </p>
-              </div>
-            )}
-
-            <Button onClick={handleSaveAutoTopup} className="w-full">
-              Save Auto Top-up Settings
-            </Button>
-            {saveMessage && <p className="text-xs text-muted-foreground text-center">{saveMessage}</p>}
-
             <p className="text-xs text-muted-foreground">
-              This setup is stored on your dashboard session preferences and does not change Supabase schema.
+              After payment confirmation, your account is upgraded to Pro by the
+              existing checkout/webhook flow.
             </p>
           </CardContent>
         </Card>
       </section>
-
-      <Card className="border-border/60">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Wallet className="h-5 w-5 text-primary" />What happens next?</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3 text-sm">
-          <div className="rounded-lg border border-border/60 p-4">
-            <p className="font-medium">1. Activate Pro once</p>
-            <p className="text-muted-foreground mt-1">Use a one-time credit package checkout to unlock Pro.</p>
-          </div>
-          <div className="rounded-lg border border-border/60 p-4">
-            <p className="font-medium">2. Keep auto top-up enabled</p>
-            <p className="text-muted-foreground mt-1">Set your preferred package for low-balance moments.</p>
-          </div>
-          <div className="rounded-lg border border-border/60 p-4">
-            <p className="font-medium">3. Maintain campaign continuity</p>
-            <p className="text-muted-foreground mt-1">Avoid boost interruptions due to depleted wallet credits.</p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
-  )
+  );
 }

@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { ensureProfile } from "@/lib/supabase/ensure-profile"
+import { isSeller } from "@/lib/marketplace/roles"
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,8 +15,8 @@ export async function POST(request: NextRequest) {
     }
 
     const profile = await ensureProfile(supabase, user)
-    if (!profile || profile.role !== "guide") {
-      return NextResponse.json({ error: "Only guides can upload verification documents" }, { status: 403 })
+    if (!profile || !isSeller(profile.role)) {
+      return NextResponse.json({ error: "Only sellers can upload verification documents" }, { status: 403 })
     }
 
     const body = await request.json()

@@ -21,7 +21,9 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 
-export default function GuideReviewsPage() {
+import { isSeller } from "@/lib/marketplace/roles"
+
+export default function SellerReviewsPage() {
   const router = useRouter()
   const { user, session, profile, isLoading } = useAuth()
   const [reviews, setReviews] = useState<any[]>([])
@@ -37,7 +39,7 @@ export default function GuideReviewsPage() {
   }, [isLoading, session, router])
 
   useEffect(() => {
-    if (!isLoading && profile && profile.role !== "guide") router.push("/")
+    if (!isLoading && profile && !isSeller(profile.role)) router.push("/")
   }, [isLoading, profile, router])
 
   useEffect(() => {
@@ -121,7 +123,7 @@ export default function GuideReviewsPage() {
     )
   }
 
-  if (!session || !profile || profile.role !== "guide") return null
+  if (!session || !profile || !isSeller(profile.role)) return null
 
   const averageRating = reviews.length > 0 
     ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)

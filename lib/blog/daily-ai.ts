@@ -156,10 +156,10 @@ const MIN_WORDS = 1200
 const EXPANSION_TARGET_WORDS = 1400
 const INFOGRAPHIC_STORAGE_BUCKET = "tour-images"
 const INFOGRAPHIC_STORAGE_PREFIX = "blog/infographics"
-const REQUIRED_PARIS_TOURS_URL = "https://www.tipwalk.com/tours/paris" as const
+const REQUIRED_PARIS_TOURS_URL = "https://www.touricho.com/tours/paris" as const
 const REQUIRED_TOUR_URLS = [
-  "https://www.tipwalk.com/tours/paris/montmartre-walking-tour",
-  "https://www.tipwalk.com/tours/paris/city-of-lights-walking-tour",
+  "https://www.touricho.com/tours/paris/montmartre-walking-tour",
+  "https://www.touricho.com/tours/paris/city-of-lights-walking-tour",
 ] as const
 const BANNED_PHRASE_RULES: BannedPhraseRule[] = [
   { phrase: "dream destination", scope: "anywhere", mode: "phrase", value: "dream destination" },
@@ -221,7 +221,7 @@ const HARD_CONSTRAINT_BANNED_PHRASES_PROMPT_BLOCK = `HARD CONSTRAINT — you mus
 
 hidden gem, hidden gems, breathtaking, stunning [adjective before noun], off the beaten path, dream destination, rich history, vibrant culture, often referred to as, unforgettable experience, stunning architecture, enchanting city, wear comfortable shoes, stay hydrated, a must-see, world-famous, iconic landmark, steeped in history, picturesque, quaint, locals and tourists alike, treasure trove, lasting memories, immerse yourself, makes Paris so special, City of Lights [in opening], vibrant atmosphere, charming streets, cobblestone streets, a unique perspective, delve deeper, rich tapestry, nestled, boasts, lively, timeless, majestic`
 
-const DAILY_AI_SYSTEM_PROMPT = `You are a content writer for TipWalk.com — a free walking tour marketplace in Paris where local guides lead small groups of maximum 10 guests. Guides keep 100% of their tips. Booking is always free.
+const DAILY_AI_SYSTEM_PROMPT = `You are a content writer for Touricho.com — a free walking tour marketplace in Paris where local guides lead small groups of maximum 10 guests. Guides keep 100% of their tips. Booking is always free.
 Our guides:
 
 Pierre Gendrin — Montmartre, 8 years living in the neighbourhood, 12 five-star reviews
@@ -236,9 +236,9 @@ Never write bullet lists of obvious travel tips (wear comfortable shoes, stay hy
 Never pad to hit word count — every paragraph must add new information
 Never write in passive voice — write actively and directly
 Never cover multiple topics shallowly — go deep on one specific topic
-Never hallucinate TipWalk features, prices, or tour details not provided above
+Never hallucinate Touricho features, prices, or tour details not provided above
 
-What good TipWalk content looks like:
+What good Touricho content looks like:
 
 Opens with a specific, surprising, or useful fact — not a generic intro
 References Pierre or Charles by name where relevant
@@ -252,16 +252,16 @@ Structure every post as:
 
 Strong opening — one paragraph, specific and surprising, answers the keyword question immediately
 Body sections (H2s) — each one goes deep on a specific sub-topic, 150–200 words per section
-TipWalk angle — one section that naturally connects the topic to what TipWalk offers, using Pierre or Charles by name
-FAQ — 3–5 questions that real TipWalk guests actually ask, with specific honest answers
+Touricho angle — one section that naturally connects the topic to what Touricho offers, using Pierre or Charles by name
+FAQ — 3–5 questions that real Touricho guests actually ask, with specific honest answers
 CTA — one sentence, natural, links to the most relevant tour page
 
 Inject these facts into every post where relevant:
 
-TipWalk tours: free to book, max 10 guests, tip at end (typical €10–20)
+Touricho tours: free to book, max 10 guests, tip at end (typical €10–20)
 Pierre's Montmartre tour starts at Place Blanche (Moulin Rouge), 2 hours, English and French
 Charles's City of Lights tour covers Pont Neuf area, 2.5 hours, English
-TipWalk launched in Paris in March 2026
+Touricho launched in Paris in March 2026
 Both guides are PRO verified with 5.0★ ratings
 
 ${HARD_CONSTRAINT_BANNED_PHRASES_PROMPT_BLOCK}`
@@ -493,10 +493,10 @@ function buildSvgHeroFallback(title: string): string {
   <circle cx="1320" cy="220" r="280" fill="#FFFFFF" fill-opacity="0.08"/>
   <circle cx="300" cy="760" r="320" fill="#FFFFFF" fill-opacity="0.08"/>
   <rect x="110" y="180" width="1380" height="540" rx="28" fill="#0F172A" fill-opacity="0.38"/>
-  <text x="170" y="305" fill="#F8FAFC" font-family="Georgia, serif" font-size="42" font-weight="700">TipWalk Paris Guide</text>
+  <text x="170" y="305" fill="#F8FAFC" font-family="Georgia, serif" font-size="42" font-weight="700">Touricho Paris Guide</text>
   <text x="170" y="395" fill="#E2E8F0" font-family="Arial, sans-serif" font-size="56" font-weight="700">${safeTitle}</text>
   <text x="170" y="500" fill="#CBD5E1" font-family="Arial, sans-serif" font-size="30">Local walking routes, practical tips, and neighborhood insights</text>
-  <text x="170" y="622" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="30">www.tipwalk.com</text>
+  <text x="170" y="622" fill="#F8FAFC" font-family="Arial, sans-serif" font-size="30">www.touricho.com</text>
 </svg>`
 }
 
@@ -524,7 +524,7 @@ function buildSvgInfographic(title: string, primaryKeyword: string, secondaryKey
   <text x="156" y="1010" fill="#334155" font-family="Arial, sans-serif" font-size="34">- Local context from active Paris walking tours</text>
   <text x="156" y="1090" fill="#334155" font-family="Arial, sans-serif" font-size="34">- Real route and planning insights</text>
   <text x="156" y="1170" fill="#334155" font-family="Arial, sans-serif" font-size="34">- Clear recommendations for first-time visitors</text>
-  <text x="156" y="1465" fill="#0F172A" font-family="Arial, sans-serif" font-size="36">TipWalk Blog • www.tipwalk.com</text>
+  <text x="156" y="1465" fill="#0F172A" font-family="Arial, sans-serif" font-size="36">Touricho Blog • www.touricho.com</text>
 </svg>`
 }
 
@@ -604,7 +604,7 @@ async function generateInfographicImageUrlFromDalle(options: {
   const prompt = [
     `Clean, minimal infographic about "${title}" for a Paris walking tour website.`,
     "White background.",
-    "TipWalk brand colour #E05C3A as accent.",
+    "Touricho brand colour #E05C3A as accent.",
     `Include 3 key facts from the article as text labels: ${factsLine}.`,
     "Professional travel editorial style.",
     "No people.",
@@ -1172,15 +1172,15 @@ async function callOpenAi(context: PromptContext): Promise<string> {
     `Write about ${context.topic}. Reference Pierre Gendrin and his Montmartre tour where relevant. Mention specific stops: ${specificStopsLine}. Do not use any of the following phrases: ${bannedListLine}.`,
     "Write a post about this topic that sounds like it was written by someone who has actually walked the streets of Paris with Pierre or Charles. Reference specific stops, real stories, and genuine local knowledge. Do not write anything a tourist brochure would say.",
     "You MUST include these exact links naturally in the content — not in a list, but woven into relevant sentences:",
-    "- [https://www.tipwalk.com/tours/paris](https://www.tipwalk.com/tours/paris) — link this when referencing tours in Paris overall or browsing all Paris tours",
-    "- [https://www.tipwalk.com/tours/paris/montmartre-walking-tour](https://www.tipwalk.com/tours/paris/montmartre-walking-tour) — link this when mentioning Pierre's Montmartre tour",
-    "- [https://www.tipwalk.com/tours/paris/city-of-lights-walking-tour](https://www.tipwalk.com/tours/paris/city-of-lights-walking-tour) — link this when mentioning the City of Lights tour or Charles",
+    "- [https://www.touricho.com/tours/paris](https://www.touricho.com/tours/paris) — link this when referencing tours in Paris overall or browsing all Paris tours",
+    "- [https://www.touricho.com/tours/paris/montmartre-walking-tour](https://www.touricho.com/tours/paris/montmartre-walking-tour) — link this when mentioning Pierre's Montmartre tour",
+    "- [https://www.touricho.com/tours/paris/city-of-lights-walking-tour](https://www.touricho.com/tours/paris/city-of-lights-walking-tour) — link this when mentioning the City of Lights tour or Charles",
     "All three links must appear in the markdown output as standard markdown links: [anchor text](URL)",
     context.customInstructions ? `Additional instructions from admin:\n${context.customInstructions}` : "",
   ].filter(Boolean)
 
   const firstPassUserPrompt = [
-    "Write one TipWalk blog draft in JSON format using this schema:",
+    "Write one Touricho blog draft in JSON format using this schema:",
     "{",
     '  "title": string,',
     '  "slug": string,',
@@ -1221,7 +1221,7 @@ async function callOpenAi(context: PromptContext): Promise<string> {
     "Return markdown only (no JSON, no code fences).",
     "Do not repeat the title, opening paragraph, or the first 3 body sections from call 1.",
     "Continue the article with 3 more body sections plus FAQ and CTA. Each body section must be at least 150 words. The FAQ must have 5 questions with full answers of at least 3 sentences each. Do not end early.",
-    "Ensure a link to https://www.tipwalk.com/tours/paris and at least 2 internal links to the provided individual tour pages across the full combined article.",
+    "Ensure a link to https://www.touricho.com/tours/paris and at least 2 internal links to the provided individual tour pages across the full combined article.",
     "",
     ...sharedContextLines,
     "",
@@ -1630,7 +1630,7 @@ export async function generateApprovalReadyDraft(options: {
   }
   const hasParisToursLink = contentMarkdown.includes(REQUIRED_PARIS_TOURS_URL)
   if (!hasParisToursLink) {
-    errors.push("Content must include an internal link to https://www.tipwalk.com/tours/paris")
+    errors.push("Content must include an internal link to https://www.touricho.com/tours/paris")
   }
 
   if (bannedGateResult.failed) {

@@ -45,7 +45,7 @@ const HOMEPAGE_FAQ_JSON_LD = {
   mainEntity: [
     {
       "@type": "Question",
-      name: "Are TipWalk walking tours really free?",
+      name: "Are Touricho walking tours really free?",
       acceptedAnswer: {
         "@type": "Answer",
         text: "Yes. There is no upfront booking fee. You join the tour for free and tip your guide at the end based on the value you received.",
@@ -61,10 +61,10 @@ const HOMEPAGE_FAQ_JSON_LD = {
     },
     {
       "@type": "Question",
-      name: "How many people are on a TipWalk tour?",
+      name: "How many people are on a Touricho tour?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "All TipWalk tours have a maximum of 10 guests for an intimate, personal experience.",
+        text: "All Touricho tours have a maximum of 10 guests for an intimate, personal experience.",
       },
     },
   ],
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: BRAND_NAME,
     type: "website",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "TipWalk Free Walking Tours" }],
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Touricho Free Walking Tours" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -131,7 +131,7 @@ function getTourAlt(tour: any) {
   const t = String(tour?.title || "").trim()
   const c = String(tour?.city || "").trim()
   if (t && c) return `${t} free walking tour in ${c}`
-  return t || "Featured walking tour on TipWalk"
+  return t || "Featured walking tour on Touricho"
 }
 
 /* ─── Page ──────────────────────────────────────────────────── */
@@ -228,7 +228,7 @@ export default async function HomePage() {
           {/* Background */}
           <Image
             src={heroBgSrc}
-            alt="Explore the world with TipWalk"
+            alt="Explore the world with Touricho"
             fill
             priority
             className="object-cover"
@@ -317,7 +317,7 @@ export default async function HomePage() {
                   Experience authentic travel with passionate local guides
                 </h2>
                 <p className="landing-template-copy mt-5 text-base leading-relaxed">
-                  TipWalk is a tip-based marketplace connecting curious travelers with local guides who know every corner of their city. No upfront fees — book free, join the tour, and tip your guide at the end based on the experience you had.
+                  Touricho is a tip-based marketplace connecting curious travelers with local guides who know every corner of their city. No upfront fees — book free, join the tour, and tip your guide at the end based on the experience you had.
                 </p>
                 <p className="landing-template-copy mt-3 text-base leading-relaxed">
                   Every tour runs with a maximum of 10 guests, keeping the experience intimate and personal. Our guides are passionate locals who share not just sights, but stories.
@@ -412,7 +412,7 @@ export default async function HomePage() {
             <div className="mb-14 text-center landing-reveal">
               <p className="landing-template-label mx-auto">Why Choose Us</p>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-(--landing-ink) sm:text-4xl">
-                The TipWalk Difference
+                The Touricho Difference
               </h2>
               <p className="landing-template-copy mx-auto mt-4 max-w-xl text-base leading-relaxed">
                 We believe great travel experiences should be accessible to everyone.
@@ -646,7 +646,7 @@ export default async function HomePage() {
                       <div>
                         <p className="font-bold text-(--landing-ink)">{name}</p>
                         <p className="text-xs text-(--landing-muted)">
-                          {review.tour?.title || "TipWalk Tour"}{review.tour?.city ? ` · ${review.tour.city}` : ""}
+                          {review.tour?.title || "Touricho Tour"}{review.tour?.city ? ` · ${review.tour.city}` : ""}
                         </p>
                       </div>
                     </div>
@@ -731,10 +731,10 @@ export default async function HomePage() {
 
             <div className="grid gap-5 md:grid-cols-2">
               {[
-                { q: "Are TipWalk tours really free to book?", a: "Yes. Book free now, tip your guide at the end based on the value you received. No credit card required." },
+                { q: "Are Touricho tours really free to book?", a: "Yes. Book free now, tip your guide at the end based on the value you received. No credit card required." },
                 { q: "How much should I tip my guide?", a: "There's no fixed rule. Most guests who enjoy the experience tip around EUR 10–20 per person, but the amount is entirely your choice." },
                 { q: "Can I tip by card?", a: "Many guides accept digital payments and cash. Payment options are shown on the tour detail page before you reserve." },
-                { q: "How are guides verified?", a: "TipWalk reviews quality signals and community feedback to surface trusted local guides. PRO means a paid plan with extra tools." },
+                { q: "How are guides verified?", a: "Touricho reviews quality signals and community feedback to surface trusted local guides. PRO means a paid plan with extra tools." },
                 { q: "Can I book tours in multiple cities?", a: "Yes. You can reserve tours in as many destinations as you want from a single account." },
                 { q: "What if I need to cancel?", a: "Since there's no upfront payment, cancellation is simple. We ask guests to cancel early so other travelers can take the spot." },
               ].map((item, i) => (

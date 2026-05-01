@@ -8,6 +8,18 @@ import { useRealtimeMessageNotifications } from "@/lib/messaging/useRealtimeMess
 import { DashboardSidebar } from "@/components/shared/dashboard-sidebar"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { signOut as nextAuthSignOut } from "next-auth/react"
+import { createClient as createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { useToast } from "@/hooks/use-toast"
+import Link from "next/link"
 import { AUTO_TOPUP_CONFIG_KEY, AUTO_TOPUP_THRESHOLD, parseAutoTopupConfig } from "@/lib/credits/auto-topup"
 import {
   Home,
@@ -23,15 +35,23 @@ import {
   Menu,
   Heart,
   Bell,
+  LayoutDashboard,
+  Compass,
+  LogOut,
+  Loader2,
+  Car,
 } from "lucide-react"
+
+import { isSeller } from "@/lib/marketplace/roles"
 
 interface DashboardLayoutProps {
   children: React.ReactNode
 }
 
-const guideItems = [
+const sellerItems = [
   { icon: Home,         label: "Overview",     href: "/dashboard",              group: "Main" },
   { icon: Map,          label: "My Tours",     href: "/dashboard/tours",        group: "Main" },
+  { icon: Car,          label: "My Cars",      href: "/dashboard/cars",         group: "Main" },
   { icon: Calendar,     label: "Bookings",     href: "/dashboard/bookings",     group: "Main" },
   { icon: MessageSquare,label: "Messages",     href: "/dashboard/messages",     group: "Main" },
   { icon: Star,         label: "Reviews",      href: "/dashboard/reviews",      group: "Growth" },
@@ -42,7 +62,7 @@ const guideItems = [
   { icon: Settings,     label: "Settings",     href: "/dashboard/settings",     group: "Account" },
 ]
 
-const touristItems = [
+const buyerItems = [
   { icon: Home,          label: "Dashboard",     href: "/profile" },
   { icon: Calendar,      label: "Bookings",      href: "/bookings" },
   { icon: Heart,         label: "Wishlist",      href: "/profile?tab=wishlist" },
@@ -53,28 +73,63 @@ const touristItems = [
 
 export function DashboardLayoutPage({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
   const { profile, user } = useAuth()
+  const { toast } = useToast()
   const totalUnread = useMessageNotificationsStore((s) => s.totalUnread)
+
+  const handleSignOut = async () => {
+    setSigningOut(true)
+    try {
+      try {
+        const supabase = createSupabaseBrowserClient()
+        await supabase.auth.signOut()
+      } catch {
+        // Best-effort - NextAuth is source of truth for session persistence.
+      }
+      await nextAuthSignOut({ redirect: false })
+      toast({ title: "Success", description: "Signed out successfully" })
+      router.replace("/login")
+      router.refresh()
+    } catch (error) {
+      console.error("[v0] Sign out error:", error)
+      toast({ title: "Error", description: "Failed to sign out", variant: "destructive" })
+    } finally {
+      setSigningOut(false)
+    }
+  }
+
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return "U"
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2)
+  }
 
   useRealtimeMessageNotifications(user?.id || null)
 
-  const isTourist = profile?.role === "tourist"
-  const baseItems = isTourist ? touristItems : guideItems
+  // Accept both old (tourist/guide) and new (buyer/seller) role names
+  const isSellerRole = isSeller(profile?.role)
+  const isBuyerRole = !isSellerRole
+  const baseItems = isBuyerRole ? buyerItems : sellerItems
   const items = baseItems.map((item) =>
     item.label === "Messages" && totalUnread > 0 ? { ...item, badge: totalUnread } : item
   )
 
   useEffect(() => {
     if (typeof window === "undefined") return
-    if (isTourist || !user?.id) return
+    if (isBuyerRole || !user?.id) return
 
     const parsed = parseAutoTopupConfig(localStorage.getItem(AUTO_TOPUP_CONFIG_KEY))
     if (!parsed || !parsed.enabled || !parsed.packageId) return
 
     const threshold = typeof parsed.threshold === "number" ? parsed.threshold : AUTO_TOPUP_THRESHOLD
-    const sessionKey = `tipwalk_auto_topup_redirected_${parsed.packageId}_${threshold}`
+    const sessionKey = `touricho_auto_topup_redirected_${parsed.packageId}_${threshold}`
     if (sessionStorage.getItem(sessionKey) === "1") return
 
     let cancelled = false
@@ -98,7 +153,7 @@ export function DashboardLayoutPage({ children }: DashboardLayoutProps) {
     return () => {
       cancelled = true
     }
-  }, [isTourist, user?.id, router])
+  }, [isBuyerRole, user?.id, router])
 
   const pageTitle =
     [...baseItems]
@@ -165,12 +220,78 @@ export function DashboardLayoutPage({ children }: DashboardLayoutProps) {
                   </span>
                 )}
               </Button>
+              {isSellerRole && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 ml-1">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || "User"} />
+                        <AvatarFallback className="bg-primary text-[11px] text-primary-foreground">
+                          {getInitials(profile.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center gap-2 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={profile.avatar_url || undefined} alt={profile.full_name || "User"} />
+                        <AvatarFallback className="bg-primary text-[12px] text-primary-foreground">
+                          {getInitials(profile.full_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-0.5">
+                        <p className="text-sm font-medium">{profile.full_name || "User"}</p>
+                        <p className="text-xs text-muted-foreground">{profile.email}</p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard" className="cursor-pointer">
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/tours" className="cursor-pointer">
+                        <Compass className="mr-2 h-4 w-4" />
+                        My Tours
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/bookings" className="cursor-pointer">
+                        <Calendar className="mr-2 h-4 w-4" />
+                        Bookings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/settings" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        Settings
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      disabled={signingOut}
+                    >
+                      {signingOut ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="mr-2 h-4 w-4" />
+                      )}
+                      {signingOut ? "Signing out..." : "Sign Out"}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <div className="dashboard-content">{children}</div>
+        <div className="dashboard-content p-4 lg:p-8 mx-auto max-w-7xl">{children}</div>
       </div>
     </div>
   )

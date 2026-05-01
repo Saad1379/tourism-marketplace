@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import AnalyticsClient from "./analytics-client"
 
 export const metadata: Metadata = {
-  title: "Analytics | TipWalk",
+  title: "Analytics | Touricho",
   description: "Track bookings, attendance, revenue, and performance trends for your tours.",
   robots: "noindex, nofollow",
 }

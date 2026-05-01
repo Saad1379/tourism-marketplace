@@ -221,7 +221,7 @@ function buildGuideContextCard(guideContext: {
 function buildSystemPrompt(mode: AssistantMode): string {
   if (mode === "guide") {
     return [
-      "You are TipWalk's guide assistant embedded in the dashboard.",
+      "You are Touricho's guide assistant embedded in the dashboard.",
       "Use only provided grounding facts and known product behavior.",
       "If a detail is unknown, say you do not have that exact data and suggest Talk to human.",
       "Do not invent product features, prices, legal rules, or booking outcomes.",
@@ -231,7 +231,7 @@ function buildSystemPrompt(mode: AssistantMode): string {
   }
 
   return [
-    "You are TipWalk's guest assistant on tour and booking pages.",
+    "You are Touricho's guest assistant on tour and booking pages.",
     "Use a warm, friendly, practical tone that helps travelers make decisions quickly.",
     "Answer directly in plain language, then give one practical next step.",
     "Use only provided grounding facts and known product behavior.",
@@ -628,6 +628,8 @@ function appendRateLimitHeaders(response: NextResponse, result: AssistantRateLim
   }
 }
 
+import { isSeller } from "@/lib/marketplace/roles"
+
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as AssistantRequestBody
@@ -654,8 +656,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
       }
       const { data: profile } = await authClient.from("profiles").select("role").eq("id", user.id).single()
-      if (profile?.role !== "guide") {
-        return NextResponse.json({ error: "Guide access required" }, { status: 403 })
+      if (profile && !isSeller(profile.role)) {
+        return NextResponse.json({ error: "Seller access required" }, { status: 403 })
       }
     }
 

@@ -8,22 +8,22 @@ import { getSiteUrl } from "@/lib/site-url"
 const PAGE_PATH = "/guides/charles-afeavo"
 const PAGE_TITLE = "Charles Afeavo — Local City of Lights Tour Guide in Paris"
 const PAGE_DESCRIPTION =
-  "Meet Charles Afeavo, TipWalk guide for central Paris routes around Pont Neuf, Notre-Dame, and Île de la Cité."
-const IMAGE_URL = "https://www.tipwalk.com/images/guides/charles-afeavo.jpg"
+  "Meet Charles Afeavo, Touricho guide for central Paris routes around Pont Neuf, Notre-Dame, and Île de la Cité."
+const IMAGE_URL = "https://www.touricho.com/images/guides/charles-afeavo.jpg"
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: PAGE_PATH },
   openGraph: {
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
     url: toCanonicalUrl(PAGE_PATH),
     type: "profile",
   },
   twitter: {
     card: "summary_large_image",
-    title: `${PAGE_TITLE} | TipWalk`,
+    title: `${PAGE_TITLE} | Touricho`,
     description: PAGE_DESCRIPTION,
   },
 }
@@ -37,7 +37,7 @@ export default function CharlesAfeavoGuidePage() {
     jobTitle: "Local Walking Tour Guide",
     worksFor: {
       "@type": "Organization",
-      name: "TipWalk",
+      name: "Touricho",
       url: siteUrl,
     },
     knowsAbout: ["Pont Neuf", "Notre-Dame", "Ile de la Cite", "Sainte-Chapelle", "Point Zero"],
@@ -54,7 +54,7 @@ export default function CharlesAfeavoGuidePage() {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
             <h1 className="public-template-heading text-3xl font-bold tracking-tight md:text-4xl">Charles Afeavo</h1>
             <p className="public-template-copy mt-4">
-              Charles leads TipWalk’s City of Lights route through central Paris, including Pont Neuf and Île de la
+              Charles leads Touricho’s City of Lights route through central Paris, including Pont Neuf and Île de la
               Cité. His tours focus on clear historical context and practical orientation for first-time visitors.
             </p>
 
@@ -69,7 +69,7 @@ export default function CharlesAfeavoGuidePage() {
               <article className="public-shell-card p-5">
                 <h2 className="text-base font-semibold text-[color:var(--landing-ink)]">Credentials</h2>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--landing-muted)]">
-                  PRO verified on TipWalk with 5.0★ rating signals and small-group walks designed for question-friendly
+                  PRO verified on Touricho with 5.0★ rating signals and small-group walks designed for question-friendly
                   pacing.
                 </p>
               </article>
@@ -83,7 +83,7 @@ export default function CharlesAfeavoGuidePage() {
                 href="/blog"
                 className="inline-flex h-11 items-center rounded-full border border-[color:var(--landing-border-2)] px-5 text-sm font-semibold text-[color:var(--landing-accent)]"
               >
-                Read TipWalk Guides
+                Read Touricho Guides
               </Link>
             </div>
           </div>
