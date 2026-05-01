@@ -1,6 +1,7 @@
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 import { TOUR_IMAGE_POLICY, isAcceptedTourImageType } from "@/lib/images/policy"
+import { uploadToCloudinary } from "@/lib/cloudinary"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -94,27 +95,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Upload file to Supabase Storage using anon client
-    console.log("[v0] Image upload: Uploading file to storage:", file.name)
-    const filename = `${user.id}/${id}/${Date.now()}-${file.name}`
-    const { data: uploadData, error: uploadError } = await anonClient.storage
-      .from("tour-images")
-      .upload(filename, file, { upsert: false })
+    // Upload file to Cloudinary
+    console.log("[v0] Image upload: Uploading file to Cloudinary:", file.name)
+    
+    // Convert File to Buffer for the utility
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+    
+    const uploadResult = await uploadToCloudinary(buffer, {
+      folder: `tours/${id}`,
+      // We don't specify a publicId here to let Cloudinary generate a unique one
+      // but we could use `${Date.now()}-${file.name.split('.')[0]}`
+    })
 
-    if (uploadError) {
-      console.error("[v0] Image upload: Storage upload failed:", uploadError.message)
-      return NextResponse.json(
-        { error: `Server error: Failed to upload to storage - ${uploadError.message}` },
-        { status: 500 }
-      )
-    }
-
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = anonClient.storage.from("tour-images").getPublicUrl(filename)
-
-    console.log("[v0] Image upload: File uploaded, getting public URL:", publicUrl)
+    const publicUrl = uploadResult.url
+    console.log("[v0] Image upload: File uploaded to Cloudinary, URL:", publicUrl)
 
     // Use service role client to update tour (bypasses RLS for storage-related updates)
     const serviceClient = createServiceRoleClient()
@@ -128,6 +123,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (updateError) {
       console.error("[v0] Image upload: Failed to update tour photos:", updateError.message, updateError.code)
+      // Note: We might want to delete the Cloudinary image here if the DB update fails,
+      // but the user only asked for storage replacement.
       return NextResponse.json(
         { error: `Server error: Failed to update tour - ${updateError.message}` },
         { status: 500 }
