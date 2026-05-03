@@ -36,12 +36,12 @@ export function RecurringScheduleBuilder({
   maxCapacity = 50,
 }: RecurringScheduleBuilderProps) {
   const [showRecurring, setShowRecurring] = useState(true)
-  const [selectedDays, setSelectedDays] = useState<number[]>([1, 3, 5]) // Mon, Wed, Fri default
-  const [time, setTime] = useState("10:00")
+  const [selectedDays, setSelectedDays] = useState<number[]>([]) // No days selected by default
+  const [time, setTime] = useState("")
   const [capacity, setCapacity] = useState(String(defaultCapacity))
   const [language, setLanguage] = useState(tourLanguages[0] || "English")
-  const [startDate, setStartDate] = useState(new Date().toISOString().split("T")[0])
-  const [weeksCount, setWeeksCount] = useState("8")
+  const [startDate, setStartDate] = useState("")
+  const [weeksCount, setWeeksCount] = useState("")
   const [generatedCount, setGeneratedCount] = useState(0)
 
   useEffect(() => {

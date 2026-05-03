@@ -279,10 +279,10 @@ export default function NewTourPage() {
     const newSchedule: ScheduleRow = {
       id: `schedule_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       language: lang,
-      time: "10:00",
+      time: "",
       capacity: defaultCapacity,
       recurrence: "once",
-      startDate: new Date().toISOString().split("T")[0],
+      startDate: "",
     }
     setValue("schedules", [...schedules, newSchedule], { shouldDirty: true, shouldValidate: true })
   }
@@ -449,9 +449,9 @@ export default function NewTourPage() {
     if (images.length < 1) blockers.push("At least 1 photo is required")
     if (schedules.length < 1) blockers.push("At least 1 schedule is required")
     if (!meetingPoint.trim()) blockers.push("Meeting point is required")
-    if (!descriptionMinMet) blockers.push(DESCRIPTION_MIN_MESSAGE)
-    if (!guideBioMinMet) blockers.push(GUIDE_BIO_MIN_MESSAGE)
-    if (!stopMinMet) blockers.push(MIN_STOPS_MESSAGE)
+    // if (!descriptionMinMet) blockers.push(DESCRIPTION_MIN_MESSAGE)
+    // if (!guideBioMinMet) blockers.push(GUIDE_BIO_MIN_MESSAGE)
+    // if (!stopMinMet) blockers.push(MIN_STOPS_MESSAGE)
     if (!minimumAttendeesValid)
       blockers.push("Minimum attendees cannot be greater than maximum group size")
     return blockers
@@ -501,8 +501,10 @@ export default function NewTourPage() {
     if (step === 2) {
       const nonEmpty = getValues("highlights").filter((h) => h.trim().length > 0).length
       if (nonEmpty < 1) {
-        setError("Add at least one highlight / stop before continuing.")
+        form.setError("highlights", { message: "Add at least one highlight / stop before continuing." })
         return false
+      } else {
+        form.clearErrors("highlights")
       }
     }
 
@@ -519,11 +521,11 @@ export default function NewTourPage() {
         setError("Add at least one schedule before continuing.")
         return false
       }
-      const upcoming = countFutureSchedules(currentSchedules)
-      if (upcoming < MIN_FUTURE_SCHEDULES_FOR_PUBLISH) {
-        setError(MIN_FUTURE_SCHEDULES_MESSAGE)
-        return false
-      }
+      // const upcoming = countFutureSchedules(currentSchedules)
+      // if (upcoming < MIN_FUTURE_SCHEDULES_FOR_PUBLISH) {
+      //   setError(MIN_FUTURE_SCHEDULES_MESSAGE)
+      //   return false
+      // }
     }
 
     return true
@@ -1053,18 +1055,18 @@ export default function NewTourPage() {
 
                   <Alert className="border-border bg-muted/40">
                     <AlertDescription className="space-y-2 text-sm">
-                      <p className="font-medium text-foreground">Publish quality checks</p>
+                      <p className="font-medium text-foreground">Publish quality recommendations</p>
                       <p className={descriptionMinMet ? "text-green-600" : "text-muted-foreground"}>
-                        Description: {descriptionLength}/{TOUR_DESCRIPTION_MIN_CHARS} characters
+                        Description (recommended): {descriptionLength}/{TOUR_DESCRIPTION_MIN_CHARS} characters
                       </p>
                       <p className={guideBioMinMet ? "text-green-600" : "text-muted-foreground"}>
-                        Guide bio: {guideBioLength}/{GUIDE_BIO_MIN_CHARS} characters
+                        Guide bio (recommended): {guideBioLength}/{GUIDE_BIO_MIN_CHARS} characters
                       </p>
                       <p className={stopMinMet ? "text-green-600" : "text-muted-foreground"}>
-                        Stops: {stopCount}/{MIN_STOPS_FOR_PUBLISH}
+                        Stops (recommended): {stopCount}/{MIN_STOPS_FOR_PUBLISH}
                       </p>
                       <p className={futureScheduleMinMet ? "text-green-600" : "text-muted-foreground"}>
-                        Upcoming dates: {futureScheduleCount}/{MIN_FUTURE_SCHEDULES_FOR_PUBLISH}
+                        Upcoming dates (recommended): {futureScheduleCount}/{MIN_FUTURE_SCHEDULES_FOR_PUBLISH}
                       </p>
                     </AlertDescription>
                   </Alert>
@@ -1074,8 +1076,9 @@ export default function NewTourPage() {
                       <div>
                         <Label>Highlights / Stops (what you will see) *</Label>
                         <p className="text-xs text-muted-foreground mt-1">
-                          List the key attractions, landmarks, or experiences on your tour
+                          Add at least one stop to proceed. 4 or more are recommended for better quality.
                         </p>
+                        <FieldError message={errors.highlights?.message as string | undefined} />
                       </div>
                       <Button
                         variant="outline"
@@ -1308,7 +1311,7 @@ export default function NewTourPage() {
                     >
                       Upcoming dates: {futureScheduleCount}/{MIN_FUTURE_SCHEDULES_FOR_PUBLISH}.{" "}
                       {futureScheduleMinMet
-                        ? "You have enough upcoming dates to publish."
+                        ? "Recommended number of upcoming dates met."
                         : MIN_FUTURE_SCHEDULES_MESSAGE}
                     </AlertDescription>
                   </Alert>
