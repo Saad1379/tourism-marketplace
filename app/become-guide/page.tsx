@@ -15,6 +15,8 @@ import {
   Shield,
   Heart,
   Mail,
+  Sparkles,
+  Crown,
 } from "lucide-react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
@@ -290,6 +292,7 @@ export default function BecomeGuidePage() {
   const [isPreAuthenticated, setIsPreAuthenticated] = useState(false)
   const [session, setSession] = useState<any>(null)
   const [applicationSubmitted, setApplicationSubmitted] = useState(false)
+  const [signupPromo, setSignupPromo] = useState<{ enabled: boolean; credits: number }>({ enabled: false, credits: 0 })
   const { profile: authProfile, session: authSession } = useAuth()
   const hasTrackedQuickViewRef = useRef(false)
   const hasTrackedFullStartRef = useRef(false)
@@ -372,6 +375,30 @@ export default function BecomeGuidePage() {
     }
 
     void loadGuidePlans()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  // Fetch signup promo config (Free Pro on Signup feature)
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadSignupPromo() {
+      try {
+        const response = await fetch("/api/public/guide-signup-promo", { cache: "no-store" })
+        if (!response.ok) return
+        const data = await response.json()
+        if (isMounted && typeof data.enabled === "boolean") {
+          setSignupPromo({ enabled: data.enabled, credits: data.credits || 0 })
+        }
+      } catch {
+        // Silently fail — promo banner is optional
+      }
+    }
+
+    void loadSignupPromo()
 
     return () => {
       isMounted = false
@@ -758,8 +785,23 @@ export default function BecomeGuidePage() {
           }
 
           // 2. PROVISION BUSINESS RECORDS
+          // Default: free plan with 0 credits
           await supabase.from("guide_plans").upsert({ guide_id: activeSession.user.id, plan_type: "free" }, { onConflict: 'guide_id' })
           await supabase.from("guide_credits").upsert({ guide_id: activeSession.user.id, balance: 0 }, { onConflict: 'guide_id' })
+
+          // 2b. If "Free Pro on Signup" promo is active, upgrade via server endpoint
+          if (signupPromo.enabled) {
+            try {
+              await fetch("/api/auth/provision-signup-promo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ guideId: activeSession.user.id }),
+              })
+            } catch (promoErr) {
+              // Non-blocking — guide is still created, just without the promo
+              console.error("[Guide Signup] Promo provisioning failed:", promoErr)
+            }
+          }
 
           // 3. CREATE ADMIN NOTIFICATION
           await fetch("/api/admin/notifications", {
@@ -828,6 +870,29 @@ export default function BecomeGuidePage() {
                 <p className="mt-2 text-sm text-[color:var(--landing-muted)]">
                   Next step after quick apply: complete profile details, submit for review, and publish after approval.
                 </p>
+
+                {/* Free Pro Signup Promo Banner */}
+                {signupPromo.enabled && (
+                  <div className="mt-6 relative overflow-hidden rounded-2xl border-2 border-amber-400/60 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 p-5 shadow-lg shadow-amber-100/40">
+                    <div className="absolute -top-3 -right-3 h-20 w-20 rounded-full bg-amber-200/30 blur-2xl" />
+                    <div className="absolute -bottom-3 -left-3 h-16 w-16 rounded-full bg-orange-200/20 blur-xl" />
+                    <div className="relative flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-md">
+                        <Crown className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                          <Sparkles className="h-4 w-4 text-amber-500" />
+                          Limited-Time Promo: Free Pro Account
+                        </p>
+                        <p className="mt-1 text-sm text-amber-800/80">
+                          Sign up now and get <strong className="text-amber-900">{signupPromo.credits} free credits</strong> plus
+                          instant <strong className="text-amber-900">Pro plan access</strong> — no payment required.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                   <Button
