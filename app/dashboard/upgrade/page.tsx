@@ -39,6 +39,7 @@ import {
   AUTO_TOPUP_THRESHOLD,
   parseAutoTopupConfig,
 } from "@/lib/credits/auto-topup";
+import { usePayment } from "@/lib/payment/client";
 
 type CreditPackage = {
   id: string;
@@ -69,6 +70,7 @@ export default function UpgradePage() {
   const supabase = createClient();
   const { user, profile, isLoading: authLoading } = useAuth();
   const { planType, planLoading } = useUserStore();
+  const { openCheckout, isReady } = usePayment();
 
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [creditsBalance, setCreditsBalance] = useState(0);
@@ -190,9 +192,13 @@ export default function UpgradePage() {
       }),
     );
 
-    router.push(
-      `/checkout?id=${encodeURIComponent(activationPackage.id)}&source=pro_activation`,
-    );
+    openCheckout({
+      packageId: activationPackage.id,
+      credits: activationPackage.credits,
+      price: activationPackage.price,
+      source: "pro_activation",
+      paddlePriceId: process.env.NEXT_PUBLIC_PADDLE_50_CREDITS_PRICE_ID
+    }, router);
   };
 
   const handleSaveAutoTopup = () => {
@@ -321,7 +327,7 @@ export default function UpgradePage() {
 
                 <Button
                   className="w-full"
-                  disabled={!activationPackage}
+                  disabled={!activationPackage || !isReady}
                   onClick={handleStartActivation}
                 >
                   <span className="inline-flex items-center">

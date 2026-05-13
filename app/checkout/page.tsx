@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -11,6 +11,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 import { createClient } from '@/lib/supabase/client';
+import { usePayment } from '@/lib/payment/client';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
@@ -77,6 +78,7 @@ function CheckoutForm({ selectedPkg, source }: { selectedPkg: any; source: strin
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   // Notice we now track selected package ID instead of credits count
   const preselectedId = searchParams.get('id');
@@ -91,6 +93,7 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const supabase = createClient();
+  const { provider, openCheckout, isReady } = usePayment();
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -139,11 +142,11 @@ export default function CheckoutPage() {
   }, []);
 
   useEffect(() => {
-    // Only fetch payment intent if packages are done loading and we have a valid selection
-    if (!packagesLoading && selectedPackageId) {
+    // Only fetch payment intent if packages are done loading and we have a valid selection and provider is stripe
+    if (!packagesLoading && selectedPackageId && provider === 'stripe') {
       handleCreatePayment();
     }
-  }, [selectedPackageId, packagesLoading]);
+  }, [selectedPackageId, packagesLoading, provider]);
 
   const selectedPkg = creditPackages.find(p => p.id === selectedPackageId);
 
@@ -243,7 +246,39 @@ export default function CheckoutPage() {
               <CardDescription>Complete your purchase</CardDescription>
             </CardHeader>
             <CardContent>
-              {packagesLoading || paymentLoading || !clientSecret || !selectedPkg ? (
+              {provider === 'paddle' ? (
+                <div className="space-y-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <div className="flex justify-between mb-2">
+                      <span>Credits:</span>
+                      <span className="font-semibold">{selectedPkg?.credits}</span>
+                    </div>
+                    <div className="flex justify-between text-xl font-bold">
+                      <span>Total:</span>
+                      <span>€{selectedPkg?.price}</span>
+                    </div>
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    size="lg" 
+                    disabled={!isReady || !selectedPkg}
+                    onClick={() => {
+                      if (selectedPkg) {
+                         openCheckout({
+                          packageId: selectedPkg.id,
+                          credits: selectedPkg.credits,
+                          price: selectedPkg.price,
+                          source: checkoutSource,
+                          paddlePriceId: selectedPkg.credits === 50 ? process.env.NEXT_PUBLIC_PADDLE_50_CREDITS_PRICE_ID : undefined
+                        }, router);
+                      }
+                    }}
+                  >
+                    {!isReady ? <Spinner className="mr-2" /> : null}
+                    Pay €{selectedPkg?.price} with Paddle
+                  </Button>
+                </div>
+              ) : packagesLoading || paymentLoading || !clientSecret || !selectedPkg ? (
                 <div className="py-8 text-center">
                   <Spinner className="mx-auto" />
                   <p className="mt-2 text-sm text-muted-foreground">Loading payment form...</p>
@@ -292,7 +327,7 @@ export default function CheckoutPage() {
               )}
             </CardContent>
             <CardFooter className="text-sm text-muted-foreground">
-              Secure payment powered by Stripe
+              Secure payment powered by {provider === 'paddle' ? 'Paddle' : 'Stripe'}
             </CardFooter>
           </Card>
         </div>

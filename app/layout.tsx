@@ -1,39 +1,45 @@
-import type React from "react"
-import type { Metadata, Viewport } from "next"
-import { Poppins } from "next/font/google"
-import "./globals.css"
-import { ClientLayout } from "./client-layout"
-import { BRAND_NAME, BRAND_SITE_URL, toCanonicalUrl, withBrandSuffix } from "@/lib/seo/brand"
-import { CONSENT_DENIED_REGIONS } from "@/lib/analytics/consent-regions"
+import type React from "react";
+import type { Metadata, Viewport } from "next";
+import { Poppins } from "next/font/google";
+import "./globals.css";
+import { ClientLayout } from "./client-layout";
+import {
+  BRAND_NAME,
+  BRAND_SITE_URL,
+  toCanonicalUrl,
+  withBrandSuffix,
+} from "@/lib/seo/brand";
+import { CONSENT_DENIED_REGIONS } from "@/lib/analytics/consent-regions";
+import Script from "next/script";
 
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-poppins",
-})
-const SITE_URL = BRAND_SITE_URL
-const GOOGLE_SITE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION?.trim()
-const META_PIXEL_ID = "1573217977123283"
-const IS_PRODUCTION = process.env.NODE_ENV === "production"
+});
+const SITE_URL = BRAND_SITE_URL;
+const GOOGLE_SITE_VERIFICATION = process.env.GOOGLE_SITE_VERIFICATION?.trim();
+const META_PIXEL_ID = "1573217977123283";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 const organizationJsonLd: Record<string, unknown> = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: BRAND_NAME,
   url: BRAND_SITE_URL,
-  description:
-    `${BRAND_NAME} is a marketplace connecting travellers with local guides for free walking tours. Book free, tip your guide at the end.`,
+  description: `${BRAND_NAME} is a marketplace connecting travellers with local guides for free walking tours. Book free, tip your guide at the end.`,
   foundingLocation: "Paris, France",
   areaServed: "Paris",
-}
+};
 
 export const metadata: Metadata = {
   title: {
-    default: withBrandSuffix("Free Walking Tours Worldwide | Book Local Guides"),
+    default: withBrandSuffix(
+      "Free Walking Tours Worldwide | Book Local Guides",
+    ),
     template: `%s | ${BRAND_NAME}`,
   },
-  description:
-    `Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe. Experience authentic culture, history, and hidden gems with ${BRAND_NAME}.`,
+  description: `Discover the world with passionate local guides. Book free walking tours in 35+ cities across Europe. Experience authentic culture, history, and hidden gems with ${BRAND_NAME}.`,
   keywords: [
     "free walking tours",
     "free walking tours worldwide",
@@ -121,7 +127,7 @@ export const metadata: Metadata = {
       }
     : undefined,
   category: "travel",
-}
+};
 
 export const viewport: Viewport = {
   themeColor: [
@@ -131,14 +137,14 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
-  const consentDeniedRegionsJson = JSON.stringify(CONSENT_DENIED_REGIONS)
+  const consentDeniedRegionsJson = JSON.stringify(CONSENT_DENIED_REGIONS);
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -246,7 +252,20 @@ export default function RootLayout({
           </noscript>
         ) : null}
         <ClientLayout>{children}</ClientLayout>
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-JJZFG8EB35"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-JJZFG8EB35');
+          `}
+        </Script>
       </body>
     </html>
-  )
+  );
 }
