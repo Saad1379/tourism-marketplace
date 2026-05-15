@@ -7,6 +7,7 @@ import { buildAutoSeoMetaDescription, buildAutoSeoTitle, deriveNeighbourhood, ge
 import { validatePublishRequirements } from "@/lib/tours/publish-validation"
 import { DESCRIPTION_MIN_MESSAGE, TOUR_DESCRIPTION_MIN_CHARS } from "@/lib/tours/publish-rules"
 import { listTourStops, sanitizeStopNames, syncAndRefreshTourStopContent } from "@/lib/tours/tour-stops"
+import { deleteFromCloudinary, getPublicIdFromUrl } from "@/lib/cloudinary"
 import { type NextRequest, NextResponse } from "next/server"
 
 function parseIntegerOrNull(value: unknown): number | null {
@@ -329,7 +330,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const { data: tour } = await supabase
       .from("tours")
       .select(
-        "id, guide_id, title, city, city_slug, tour_slug, status, description, highlights, seo_keywords, seo_title, seo_meta_description, seo_title_manually_overridden, seo_meta_description_manually_overridden, max_capacity, minimum_attendees",
+        "id, guide_id, title, city, city_slug, tour_slug, status, description, highlights, seo_keywords, seo_title, seo_meta_description, seo_title_manually_overridden, seo_meta_description_manually_overridden, max_capacity, minimum_attendees, images, photos",
       )
       .eq("id", id)
       .single()
@@ -395,6 +396,12 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
           : body.status === "draft"
             ? null
             : undefined,
+    }
+
+    // Mirror `images` to `photos` — readers across the app are split between
+    // the two columns, so they must stay in sync or deleted photos reappear.
+    if (Array.isArray(body.images)) {
+      payload.photos = body.images
     }
 
     // Don't overwrite the (NOT NULL) title with an empty string when the
@@ -480,6 +487,29 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Best-effort: delete from Cloudinary any image URLs the edit removed.
+    // Runs after the DB update so we don't orphan storage if the update fails.
+    if (Array.isArray(body.images)) {
+      const previousUrls = new Set<string>([
+        ...(Array.isArray(tour.images) ? tour.images : []),
+        ...(Array.isArray(tour.photos) ? tour.photos : []),
+      ])
+      const nextUrls = new Set<string>(body.images)
+      const removedPublicIds = [...previousUrls]
+        .filter((url) => typeof url === "string" && !nextUrls.has(url))
+        .map((url) => getPublicIdFromUrl(url))
+        .filter((publicId): publicId is string => Boolean(publicId))
+      await Promise.allSettled(
+        removedPublicIds.map(async (publicId) => {
+          try {
+            await deleteFromCloudinary(publicId)
+          } catch (cloudinaryError) {
+            console.warn("[v0] Cloudinary delete failed for", publicId, cloudinaryError)
+          }
+        }),
+      )
     }
 
     const shouldRefreshStops =

@@ -59,7 +59,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.log("[v0] Image upload: Verifying tour", id, "for user", user.id)
     const { data: tour, error: tourError } = await anonClient
       .from("tours")
-      .select("id, guide_id, photos")
+      .select("id, guide_id, photos, images")
       .eq("id", id)
       .single()
 
@@ -81,8 +81,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Limit number of photos per tour
-    const currentPhotos = tour.photos || []
+    // Use `images` as the authoritative source — the edit flow pre-PATCHes
+    // the trimmed list there before calling this endpoint. Fall back to
+    // `photos` for tours that only have legacy data.
+    const currentPhotos =
+      Array.isArray(tour.images) && tour.images.length > 0
+        ? tour.images
+        : Array.isArray(tour.photos)
+          ? tour.photos
+          : []
     if (currentPhotos.length >= TOUR_IMAGE_POLICY.maxImagesPerTour) {
       console.warn("[v0] Image upload: Photo limit reached for tour", id)
       return NextResponse.json(
@@ -118,7 +125,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.log("[v0] Image upload: Updating tour photos array, new length:", updatedPhotos.length)
     const { error: updateError } = await serviceClient
       .from("tours")
-      .update({ photos: updatedPhotos })
+      .update({ photos: updatedPhotos, images: updatedPhotos })
       .eq("id", id)
 
     if (updateError) {
