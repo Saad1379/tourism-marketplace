@@ -145,11 +145,22 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
         reviews(id, rating, content, title, created_at, tourist:tourist_id(full_name, avatar_url))
       `)
       .eq("id", id)
-      .eq("status", "published")
       .single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 404 })
+    }
+
+    // Drafts must only be readable by the owning guide — needed for the
+    // dashboard edit form, which uses this same endpoint. Return 404 (not
+    // 403) for non-owners so we don't leak that the draft exists.
+    if (data.status !== "published") {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user || data.guide_id !== user.id) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 })
+      }
     }
 
     const [planResult, boostResult, guidePublishedToursResult, guideFirstTourResult, tourStops] = await Promise.all([
