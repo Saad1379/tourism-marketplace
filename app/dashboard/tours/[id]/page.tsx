@@ -584,6 +584,15 @@ export default function EditTourPage() {
   ])
 
   const blockersRef = useRef<HTMLDivElement>(null)
+  const errorAlertRef = useRef<HTMLDivElement>(null)
+
+  // Scroll the destructive alert into view whenever a new error appears —
+  // publish-requirement failures surface here, and the alert sits at the top
+  // of the form so guests on long forms can otherwise miss it entirely.
+  useEffect(() => {
+    if (!error) return
+    errorAlertRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [error])
 
   const validateStep = async (step: number): Promise<boolean> => {
     setError(null)
@@ -875,7 +884,7 @@ export default function EditTourPage() {
 
       <div className="max-w-5xl mx-auto py-4 sm:py-8 px-4 sm:px-6">
         {error && (
-          <Alert variant="destructive" className="mb-6">
+          <Alert ref={errorAlertRef} variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>

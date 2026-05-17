@@ -466,7 +466,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
       if (publishIssues.length > 0) {
         return NextResponse.json(
           {
-            error: "Publish requirements not met",
+            error: publishIssues.join(" • "),
             issues: publishIssues,
           },
           { status: 400 },
